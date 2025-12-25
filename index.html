@@ -131,7 +131,7 @@ const WelcomeScreen = ({ onSelect }) => (
                 </div>
             </div>
         </div>
-        <div className="mt-12 text-[10px] text-slate-400">v6.2 Multi-Store System</div>
+        <div className="mt-12 text-[10px] text-slate-400">v6.2 Manual Add System</div>
     </div>
 );
 
@@ -300,6 +300,29 @@ const StoreApp = ({ storeConfig, onBack }) => {
         await db.collection(collections.machines).doc(machine.id).set(updatedMachine);
     };
 
+    // MANUAL ADD MACHINE
+    const handleAddMachine = async () => {
+        const defaultId = (machines.reduce((max,m)=>{const n=parseInt(m.id); return isNaN(n)?max:Math.max(max,n);},0)+1).toString();
+        const id = prompt("請輸入新機台編號 (例如: 16 或 G)", defaultId);
+        if (!id) return;
+        if (machines.some(m => m.id === id)) return alert('機台編號已存在！');
+
+        try {
+            await db.collection(collections.machines).doc(id).set({
+                id: id,
+                name: storeConfig.id === 'kwun_tong' ? `機台 ${id}` : id, // Camel uses just ID as name
+                owner: '', 
+                phone: '', 
+                coinValue: 5,
+                isOwnerMachine: false
+            });
+            alert(`成功新增機台：${id}`);
+        } catch (e) {
+            console.error(e);
+            alert('新增失敗: ' + e.message);
+        }
+    };
+
     // --- Daily Summary Table ---
     const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
         const allIds = useMemo(() => Array.from(new Set([...machines.map(m=>m.id), ...Object.keys(data||{})])).sort((a,b)=>{
@@ -450,11 +473,9 @@ const StoreApp = ({ storeConfig, onBack }) => {
                         <button onClick={addMemo} className="w-full bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-200"><Icons.Message/> 發送留言</button>
                     </div>
                 </div>
-
                 <div className="h-40"></div>
-
                 <div className="glass-dock fixed bottom-[85px] left-4 right-4 p-4 rounded-3xl flex justify-between items-center z-40 animate-enter delay-5">
-                    <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className={`text-2xl font-black tracking-tight ${pl>=0?'text-emerald-500':'text-rose-500'}`}>{pl>0?'+':''}{formatCurrency(pl)}</p></div>
+                    <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">{pl>0?'+':''}{formatCurrency(pl)}</p></div>
                     {isAdmin ? <button onClick={saveData} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg active:scale-95 text-sm transition-all"><Icons.Save/> 儲存</button> : <button disabled className="bg-slate-300 text-slate-500 px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-inner text-sm"><Icons.Lock/> 訪客</button>}
                 </div>
                 
@@ -516,7 +537,7 @@ const StoreApp = ({ storeConfig, onBack }) => {
                     )}
                 </div>
             ))}</div>
-            {isAdmin ? <><button onClick={async()=>{const newId=(machines.reduce((max,m)=>{const n=parseInt(m.id); return isNaN(n)?max:Math.max(max,n);},0)+1).toString();await db.collection(collections.machines).doc(newId).set({id:newId,name:`機台 ${newId}`,coinValue:5})}} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button><button onClick={async()=>{for(const m of machines)await db.collection(collections.machines).doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95 transition-all">儲存設定</button></> : <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2"><Icons.Lock/> 權限不足</button>}
+            {isAdmin ? <><button onClick={handleAddMachine} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button><button onClick={async()=>{for(const m of machines)await db.collection(collections.machines).doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95 transition-all">儲存設定</button></> : <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2"><Icons.Lock/> 權限不足</button>}
         </div>
     );
 
