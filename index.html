@@ -15,38 +15,96 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <style>
-body { font-family: -apple-system, "SF Pro Display", "Noto Sans TC", sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f5f5f7; color: #1d1d1f; }
+/* 核心設定 */
+body { font-family: -apple-system, "SF Pro Display", "Noto Sans TC", sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f0f2f5; color: #1d1d1f; overflow-x: hidden; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
-/* 極光背景動畫 */
-.mesh-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: -2; overflow: hidden; }
-.mesh-blob { position: absolute; filter: blur(90px); opacity: 0.6; animation: float 20s infinite alternate; }
-.blob-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: #c084fc; animation-delay: 0s; }
-.blob-2 { bottom: -10%; right: -10%; width: 70vw; height: 70vw; background: #818cf8; animation-delay: -5s; }
-.blob-3 { top: 40%; left: 40%; width: 50vw; height: 50vw; background: #f472b6; animation-delay: -10s; }
-@keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
-
-/* 高級玻璃質感 */
-.glass-panel { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05); }
-.glass-dock { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-top: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1); }
-.glass-nav { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.3); }
-.glass-input { background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.5); transition: all 0.3s ease; }
-.glass-input:focus { background: rgba(255, 255, 255, 0.8); border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2); }
-
-/* Toast Notification Animation */
-@keyframes slide-up-fade {
-    0% { transform: translate(-50%, 100%); opacity: 0; }
-    100% { transform: translate(-50%, 0); opacity: 1; }
-}
-.toast-anim { animation: slide-up-fade 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-
-.locked-element { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* --- 1. 極光流體背景 --- */
+.mesh-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: -2; overflow: hidden; }
+.mesh-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; animation: blob-float 10s infinite ease-in-out alternate; will-change: transform; }
+.blob-1 { top: -10%; left: -20%; width: 80vw; height: 80vw; background: #a78bfa; animation-duration: 12s; }
+.blob-2 { bottom: -10%; right: -20%; width: 80vw; height: 80vw; background: #60a5fa; animation-duration: 15s; animation-delay: -2s; }
+.blob-3 { top: 40%; left: 30%; width: 60vw; height: 60vw; background: #f472b6; animation-duration: 18s; animation-delay: -5s; opacity: 0.4; }
+@keyframes blob-float {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(20px, -20px) scale(1.05); }
+    100% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* --- 2. 高級玻璃與卡片 --- */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05), inset 0 0 0 1px rgba(255,255,255,0.2);
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.2s ease;
+}
+.glass-panel:active { transform: scale(0.98); } /* 卡片點擊回饋 */
+
+.glass-dock {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* --- 3. 輸入框互動特效 --- */
+.glass-input {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-input:focus {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #818cf8;
+    transform: scale(1.02); /* 聚焦時微微放大 */
+    box-shadow: 0 4px 20px rgba(129, 140, 248, 0.15);
+}
+
+/* --- 4. 進場動畫 (Stagger Animation) --- */
+@keyframes slide-up-fade {
+    0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-enter { opacity: 0; animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* 延遲設定，讓卡片一張張出來 */
+.delay-0 { animation-delay: 0ms; }
+.delay-1 { animation-delay: 50ms; }
+.delay-2 { animation-delay: 100ms; }
+.delay-3 { animation-delay: 150ms; }
+.delay-4 { animation-delay: 200ms; }
+.delay-5 { animation-delay: 250ms; }
+
+/* --- 5. 文字流光特效 --- */
+.text-shimmer {
+    background: linear-gradient(90deg, #4f46e5, #9333ea, #4f46e5);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+}
+@keyframes shimmer { to { background-position: 200% center; } }
+
+/* Toast */
+.toast-box { transform: translate(-50%, 100%); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.toast-show { transform: translate(-50%, 0); opacity: 1; }
+
+.locked-element { opacity: 0.5; pointer-events: none; filter: grayscale(90%); }
 </style>
 </head>
 <body>
-<div class="mesh-bg"><div class="mesh-blob blob-1 rounded-full"></div><div class="mesh-blob blob-2 rounded-full"></div><div class="mesh-blob blob-3 rounded-full"></div></div>
+<div class="mesh-bg"><div class="mesh-blob blob-1"></div><div class="mesh-blob blob-2"></div><div class="mesh-blob blob-3"></div></div>
 <div id="root"></div>
 <script type="text/babel">
 const firebaseConfig = { apiKey: "AIzaSyAaOvxEx2gFin7caKmK8WFUZW2akue03M0", authDomain: "ktpsave.firebaseapp.com", projectId: "ktpsave", storageBucket: "ktpsave.firebasestorage.app", messagingSenderId: "1085218871782", appId: "1:1085218871782:web:afa68ab315fe8b3dbe5e27", measurementId: "G-WZQ61MP067" };
@@ -54,6 +112,7 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(); const db = firebase.firestore();
 const { useState, useEffect, useMemo, useRef } = React;
 
+// --- SVGs ---
 const Icons = {
     Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
     Save: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
@@ -67,7 +126,6 @@ const Icons = {
     Table: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>,
     CheckSquare: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
     Square: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
-    Whatsapp: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
     Folder: () => <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
     Empty: () => <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
     Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
@@ -82,16 +140,14 @@ const formatDate = (date) => { let m = '' + (date.getMonth() + 1), d = '' + date
 const formatCurrency = (n) => { if(isNaN(n) || n === null) return '$0'; return new Intl.NumberFormat('zh-HK', { style: 'currency', currency: 'HKD', minimumFractionDigits: 0 }).format(n); };
 const formatTime = (ts) => { if(!ts) return ''; const d = new Date(ts.seconds * 1000); return `${d.getMonth()+1}月${d.getDate()}日 ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; };
 
-// --- Toast Component ---
-const Toast = ({ show, msg }) => {
-    return (
-        <div className={`fixed bottom-32 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none ${show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 border border-white/10">
-                <span className="text-emerald-400">✨</span> {msg}
-            </div>
+// --- Toast ---
+const Toast = ({ show, msg }) => (
+    <div className={`fixed bottom-32 left-1/2 -translate-x-1/2 z-50 pointer-events-none toast-box ${show ? 'toast-show' : ''}`}>
+        <div className="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 border border-white/10 ring-1 ring-white/20">
+            <span className="text-emerald-400">✨</span> {msg}
         </div>
-    );
-};
+    </div>
+);
 
 // --- Summary Table ---
 const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
@@ -104,8 +160,11 @@ const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=fal
     const profitLoss = totalCash - totalMachineRevenue;
 
     return (
-        <div className="glass-panel rounded-3xl overflow-hidden mt-6 shadow-sm animate-fade-in">
-            <div className="bg-white/40 px-5 py-4 border-b border-white/40 flex items-center gap-2"><div className="text-indigo-600"><Icons.Table /></div><h3 className="font-bold text-slate-800 text-sm">營收結算表</h3></div>
+        <div className="glass-panel rounded-3xl overflow-hidden mt-6 shadow-sm animate-enter delay-3">
+            <div className="bg-white/40 px-5 py-4 border-b border-white/40 flex items-center gap-2 backdrop-blur-md">
+                <div className="text-indigo-600 bg-indigo-50 p-1.5 rounded-lg"><Icons.Table /></div>
+                <h3 className="font-bold text-slate-800 text-sm">營收結算表</h3>
+            </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead><tr className="bg-indigo-50/50 text-indigo-900/60 text-[10px] uppercase font-bold tracking-wider"><th className="px-4 py-3 pl-6">機台</th><th className="px-2 py-3 text-right">上數</th><th className="px-2 py-3 text-right">下數</th><th className="px-2 py-3 text-right text-indigo-700">總計</th><th className="px-2 py-3 text-center">派彩</th></tr></thead>
@@ -115,11 +174,11 @@ const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=fal
                             if(!machineMap[id] && total===0) return null;
                             return (
                                 <tr key={id} className={`hover:bg-white/40 transition-colors ${idx%2===0?'bg-white/10':''}`}>
-                                    <td className="px-4 py-3 pl-6"><div className="flex items-center gap-3"><div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-[10px] font-bold shadow-sm">{id}</div><div className="flex flex-col"><span className="font-semibold text-slate-700">{m.name}</span><span className="text-[10px] text-slate-500">{m.owner}</span></div></div></td>
-                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs">{r.upper>0?formatCurrency(r.upper).replace('HK$',''):'-'}</td>
-                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs">{r.lower>0?formatCurrency(r.lower).replace('HK$',''):'-'}</td>
-                                    <td className="px-2 py-3 text-right font-bold text-indigo-600 font-mono text-xs">{total>0?formatCurrency(total).replace('HK$',''):'-'}</td>
-                                    <td className="px-2 py-3 text-center"><button disabled={readOnly} onClick={()=>onTogglePaid&&onTogglePaid(id, !r.isPaid)} className={`p-1.5 rounded-lg transition-all active:scale-95 ${readOnly?'':'hover:bg-white/60'}`}>{r.isPaid?<div className="text-emerald-500"><Icons.CheckSquare/></div>:<div className="text-slate-300"><Icons.Square/></div>}</button></td>
+                                    <td className="px-4 py-3 pl-6"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-[10px] font-bold shadow-md shadow-indigo-500/20">{id}</div><div className="flex flex-col"><span className="font-bold text-slate-700">{m.name}</span><span className="text-[10px] text-slate-500">{m.owner}</span></div></div></td>
+                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.upper>0?formatCurrency(r.upper).replace('HK$',''):'-'}</td>
+                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.lower>0?formatCurrency(r.lower).replace('HK$',''):'-'}</td>
+                                    <td className="px-2 py-3 text-right font-bold text-indigo-600 font-mono text-xs tracking-tight">{total>0?formatCurrency(total).replace('HK$',''):'-'}</td>
+                                    <td className="px-2 py-3 text-center"><button disabled={readOnly} onClick={()=>onTogglePaid&&onTogglePaid(id, !r.isPaid)} className={`p-1.5 rounded-lg transition-all active:scale-95 ${readOnly?'':'hover:bg-white/60'}`}>{r.isPaid?<div className="text-emerald-500 drop-shadow-sm"><Icons.CheckSquare/></div>:<div className="text-slate-300"><Icons.Square/></div>}</button></td>
                                 </tr>
                             );
                         })}
@@ -128,14 +187,14 @@ const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=fal
             </div>
             <div className="bg-white/30 p-5 space-y-2 backdrop-blur-sm">
                 <div className="flex justify-between text-sm"><span className="text-slate-500 font-medium">機台總和</span><span className="font-bold text-slate-700 font-mono">{formatCurrency(totalMachineRevenue)}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-slate-500">本次紙幣</span><span className="font-bold text-emerald-600 font-mono">+ {formatCurrency(currentCash)}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-slate-500">上次紙幣</span><span className="font-bold text-blue-600 font-mono">+ {formatCurrency(previousCash)}</span></div>
-                <div className="my-2 border-t border-slate-300/30 border-dashed"></div>
-                <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">現金總數</span><span className="font-bold text-slate-800 font-mono">{formatCurrency(totalCash)}</span></div>
-                <div className={`mt-3 p-4 rounded-2xl flex justify-between items-center shadow-inner ring-1 ring-inset ${profitLoss>=0?'bg-emerald-50/50 text-emerald-800 ring-emerald-100':'bg-rose-50/50 text-rose-800 ring-rose-100'}`}>
+                <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>本次紙幣</span><span className="font-bold text-emerald-600 font-mono">+ {formatCurrency(currentCash)}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>上次紙幣</span><span className="font-bold text-blue-600 font-mono">+ {formatCurrency(previousCash)}</span></div>
+                <div className="my-2 border-t border-slate-400/20 border-dashed"></div>
+                <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">現金總數</span><span className="font-black text-slate-800 font-mono text-base">{formatCurrency(totalCash)}</span></div>
+                <div className={`mt-3 p-4 rounded-2xl flex justify-between items-center shadow-inner ring-1 ring-inset transition-colors ${profitLoss>=0?'bg-emerald-50/50 text-emerald-900 ring-emerald-200/50':'bg-rose-50/50 text-rose-900 ring-rose-200/50'}`}>
                     <span className="font-bold text-xs uppercase tracking-wider opacity-70">盈虧</span><span className="font-black text-2xl tracking-tight font-mono">{profitLoss>0?'+':''}{formatCurrency(profitLoss)}</span>
                 </div>
-                <div className="mt-2 text-[10px] text-slate-400 text-center">兌幣機記錄: {formatCurrency(Number(extraData?.exchangeMachineCash)||0)}</div>
+                <div className="mt-2 text-[10px] text-slate-400 text-center font-medium">兌幣機記錄: {formatCurrency(Number(extraData?.exchangeMachineCash)||0)}</div>
             </div>
         </div>
     );
@@ -205,21 +264,21 @@ const App = () => {
         const pl = (currCash + (Number(extraData.previousCash)||0)) - totalRev;
 
         return (
-            <div className="space-y-6 animate-fade-in">
-                <div className="glass-panel p-2 rounded-2xl flex items-center relative overflow-hidden">
+            <div className="space-y-6">
+                <div className="glass-panel p-2 rounded-2xl flex items-center relative overflow-hidden animate-enter delay-0">
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-400 to-purple-500"></div>
                     <div className="pl-4 py-3 flex-1"><label className="block text-[10px] font-bold text-indigo-500/80 uppercase">選擇日期</label><div className="font-black text-slate-700 text-xl flex items-center gap-2"><span className="text-indigo-500"><Icons.Calendar/></span>{selectedDate}</div></div>
                     <button onClick={(e)=>{e.stopPropagation();setSelectedDate(formatDate(new Date()));}} className="relative z-20 mr-2 bg-white/50 hover:bg-white text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm backdrop-blur-sm border border-white/50 transition-all active:scale-95">今天</button>
                     <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full z-10 cursor-pointer"/>
                 </div>
-                {!isAdmin && <div className="bg-slate-200/80 p-3 rounded-xl text-xs text-slate-600 text-center flex items-center justify-center gap-2"><Icons.Lock/> 訪客模式：只能查看，無法編輯</div>}
+                {!isAdmin && <div className="bg-slate-200/80 p-3 rounded-xl text-xs text-slate-600 text-center flex items-center justify-center gap-2 animate-enter delay-1"><Icons.Lock/> 訪客模式：只能查看，無法編輯</div>}
                 
                 <div className="space-y-5">
-                    {machines.map(m => {
+                    {machines.map((m, i) => {
                         const d = dailyData[m.id]||{}; const cv = m.coinValue||5; const sub = (Number(d.upper)||0)+(Number(d.lower)||0);
                         return (
-                            <div key={m.id} className={`glass-panel rounded-3xl overflow-hidden ${!isAdmin?'locked-element':''}`}>
-                                <div className="bg-white/40 px-5 py-4 border-b border-white/50 flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-lg">{m.id}</div><div><h3 className="font-bold text-slate-800 text-lg">{m.name}</h3><p className="text-[11px] text-slate-500 font-medium">幣值: ${cv}</p></div></div><div className="text-right"><span className="text-[10px] text-slate-400 block font-bold">小計</span><span className="font-black text-indigo-600 text-xl">{formatCurrency(sub).replace('HK$','')}</span></div></div>
+                            <div key={m.id} className={`glass-panel rounded-3xl overflow-hidden animate-enter ${!isAdmin?'locked-element':''}`} style={{animationDelay: `${(i+1)*50}ms`}}>
+                                <div className="bg-white/40 px-5 py-4 border-b border-white/50 flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-indigo-500/20">{m.id}</div><div><h3 className="font-bold text-slate-800 text-lg">{m.name}</h3><p className="text-[11px] text-slate-500 font-medium">幣值: ${cv}</p></div></div><div className="text-right"><span className="text-[10px] text-slate-400 block font-bold">小計</span><span className="font-black text-indigo-600 text-xl">{formatCurrency(sub).replace('HK$','')}</span></div></div>
                                 <div className="p-5 grid grid-cols-2 gap-4">
                                     <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400">上層個數</label><input disabled={!isAdmin} type="number" placeholder="0" value={d.upper?(Number(d.upper)/cv):''} onChange={e=>handleCountChange(m.id,'upper',e.target.value,cv)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/><div className="text-center text-[10px] text-slate-400">= ${Number(d.upper)||0}</div></div>
                                     <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400">下層個數</label><input disabled={!isAdmin} type="number" placeholder="0" value={d.lower?(Number(d.lower)/cv):''} onChange={e=>handleCountChange(m.id,'lower',e.target.value,cv)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/><div className="text-center text-[10px] text-slate-400">= ${Number(d.lower)||0}</div></div>
@@ -230,16 +289,16 @@ const App = () => {
                     })}
                 </div>
 
-                <div className={`glass-panel p-5 rounded-3xl mt-8 ${!isAdmin?'locked-element':''}`}>
+                <div className={`glass-panel p-5 rounded-3xl mt-8 animate-enter delay-3 ${!isAdmin?'locked-element':''}`}>
                     <h3 className="font-bold mb-4 text-slate-700 flex items-center gap-2 text-lg"><span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-teal-500"></span>現金點算</h3>
                     <div className="grid grid-cols-2 gap-3">
-                        {['1000','500','100','50','20','10'].map(d=>(<div key={d} className="relative"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-emerald-600">${d}</label><div className="flex items-center"><input disabled={!isAdmin} type="number" placeholder="0" value={cashCounts[d]||''} onChange={e=>setCashCounts(prev=>({...prev,[d]:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div><div className="text-right text-[10px] text-slate-400 mt-1 mr-1 opacity-60">= {formatCurrency((cashCounts[d]||0)*d).replace('HK$','')}</div></div>))}
-                        <div className="col-span-2 relative mt-3"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-amber-500">硬幣總額</label><input disabled={!isAdmin} type="number" placeholder="0" value={cashCounts['coins']||''} onChange={e=>setCashCounts(prev=>({...prev,['coins']:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div>
+                        {['1000','500','100','50','20','10'].map(d=>(<div key={d} className="relative"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-emerald-600 shadow-sm">${d}</label><div className="flex items-center"><input disabled={!isAdmin} type="number" placeholder="0" value={cashCounts[d]||''} onChange={e=>setCashCounts(prev=>({...prev,[d]:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div><div className="text-right text-[10px] text-slate-400 mt-1 mr-1 opacity-60">= {formatCurrency((cashCounts[d]||0)*d).replace('HK$','')}</div></div>))}
+                        <div className="col-span-2 relative mt-3"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-amber-500 shadow-sm">硬幣總額</label><input disabled={!isAdmin} type="number" placeholder="0" value={cashCounts['coins']||''} onChange={e=>setCashCounts(prev=>({...prev,['coins']:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div>
                     </div>
                     <div className="mt-5 pt-4 border-t border-slate-200/50 flex justify-between font-bold text-sm"><span className="text-slate-500">本次紙幣小計</span><span className="text-emerald-600 text-xl font-black">{formatCurrency(currCash)}</span></div>
                 </div>
 
-                <div className={`glass-panel p-5 rounded-3xl mt-4 space-y-5 ${!isAdmin?'locked-element':''}`}>
+                <div className={`glass-panel p-5 rounded-3xl mt-4 space-y-5 animate-enter delay-3 ${!isAdmin?'locked-element':''}`}>
                     <div><label className="text-xs font-bold text-slate-500 ml-1">上次數到的紙幣</label><input disabled={!isAdmin} type="number" placeholder="0" value={extraData.previousCash} onChange={e=>setExtraData(prev=>({...prev,previousCash:e.target.value}))} className="glass-input w-full py-3 px-4 rounded-xl focus:bg-white outline-none font-bold text-slate-700 text-lg"/></div>
                     <div><label className="text-xs font-bold text-slate-500 ml-1">兌幣機現有紙幣</label><input disabled={!isAdmin} type="number" placeholder="0" value={extraData.exchangeMachineCash} onChange={e=>setExtraData(prev=>({...prev,exchangeMachineCash:e.target.value}))} className="glass-input w-full py-3 px-4 rounded-xl focus:bg-white outline-none font-bold text-slate-700 text-lg"/></div>
                 </div>
@@ -247,43 +306,33 @@ const App = () => {
                 <DailySummaryTable machines={machines} data={dailyData} cashCounts={cashCounts} extraData={extraData} onTogglePaid={(id,st)=>{if(isAdmin)setDailyData(prev=>({...prev,[id]:{...(prev[id]||{}),isPaid:st}}))}}/>
                 
                 {/* Memo Board */}
-                <div className="glass-panel p-5 rounded-3xl mt-8">
+                <div className="glass-panel p-5 rounded-3xl mt-8 animate-enter delay-4">
                     <h3 className="font-bold mb-4 text-slate-700 flex items-center gap-2 text-lg"><span className="w-1.5 h-6 rounded-full bg-indigo-500"></span>留言備忘板</h3>
-                    
-                    {/* Memo List */}
                     <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-1">
                         {memos.length === 0 && <div className="text-center text-slate-400 text-xs py-4">暫無留言</div>}
                         {memos.map(memo => (
-                            <div key={memo.id} className="bg-white/60 p-3 rounded-2xl rounded-tl-none relative group">
+                            <div key={memo.id} className="bg-white/60 p-3 rounded-2xl rounded-tl-none relative group border border-white/50">
                                 <div className="flex justify-between items-start"><div className="flex flex-col"><span className="text-[11px] font-bold text-indigo-600">{memo.name}</span><span className="text-[9px] text-slate-400">{formatTime(memo.createdAt)}</span></div>{isAdmin && <button onClick={()=>deleteMemo(memo.id)} className="text-slate-300 hover:text-rose-500 p-1"><Icons.Trash2/></button>}</div>
                                 <div className="mt-1 text-sm text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">{memo.text}</div>
                             </div>
                         ))}
                     </div>
-
-                    {/* Memo Input */}
                     <div className="space-y-3 bg-white/40 p-3 rounded-2xl">
                         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                             {PRESET_NAMES.map(name => (
-                                <button 
-                                    key={name} 
-                                    onClick={() => setMemoName(name)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${memoName === name ? 'bg-indigo-500 text-white shadow-md' : 'bg-white/60 text-slate-600 hover:bg-white'}`}
-                                >
-                                    {name}
-                                </button>
+                                <button key={name} onClick={() => setMemoName(name)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shadow-sm border border-white/20 ${memoName === name ? 'bg-indigo-500 text-white shadow-indigo-200' : 'bg-white/60 text-slate-600 hover:bg-white'}`}>{name}</button>
                             ))}
                         </div>
                         <input value={memoName} onChange={e=>setMemoName(e.target.value)} placeholder="輸入您的姓名..." className="w-full bg-white/50 border-none rounded-xl px-3 py-2 text-sm font-bold text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 outline-none"/>
                         <textarea value={memoText} onChange={e=>setMemoText(e.target.value)} placeholder="輸入備忘事項..." rows="2" className="w-full bg-white/50 border-none rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 outline-none resize-none"></textarea>
-                        <button onClick={addMemo} className="w-full bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-600 active:scale-95 transition-all"><Icons.Message/> 發送留言</button>
+                        <button onClick={addMemo} className="w-full bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-200"><Icons.Message/> 發送留言</button>
                     </div>
                 </div>
 
                 <div className="h-40"></div>
 
-                <div className="glass-dock fixed bottom-[85px] left-4 right-4 p-4 rounded-3xl flex justify-between items-center z-40">
-                    <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className={`text-2xl font-black tracking-tight ${pl>=0?'text-emerald-500':'text-rose-500'}`}>{pl>0?'+':''}{formatCurrency(pl)}</p></div>
+                <div className="glass-dock fixed bottom-[85px] left-4 right-4 p-4 rounded-3xl flex justify-between items-center z-40 animate-enter delay-5">
+                    <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">{pl>0?'+':''}{formatCurrency(pl)}</p></div>
                     {isAdmin ? <button onClick={saveData} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg active:scale-95 text-sm transition-all"><Icons.Save/> 儲存</button> : <button disabled className="bg-slate-300 text-slate-500 px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-inner text-sm"><Icons.Lock/> 訪客</button>}
                 </div>
                 
@@ -293,23 +342,23 @@ const App = () => {
     };
 
     const renderHistory = () => {
-        if (!historyData.length) return <div className="flex flex-col items-center py-20 text-slate-400"><Icons.Empty/><p className="mt-4 font-bold text-sm">暫無紀錄，請先新增資料。</p></div>;
+        if (!historyData.length) return <div className="flex flex-col items-center py-20 text-slate-400 animate-enter"><Icons.Empty/><p className="mt-4 font-bold text-sm">暫無紀錄，請先新增資料。</p></div>;
         const groups = {}; historyData.forEach(r => { const k=r.date.substring(0,7); if(!groups[k]) groups[k]=[]; groups[k].push(r); });
         return (
-            <div className="space-y-6 animate-fade-in">
-                <h2 className="text-3xl font-black text-slate-800 px-1">歷史紀錄</h2>
-                {Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([mKey, recs]) => {
+            <div className="space-y-6 animate-enter">
+                <h2 className="text-3xl font-black text-slate-800 px-1 text-shimmer">歷史紀錄</h2>
+                {Object.entries(groups).sort((a,b)=>b[0].localeCompare(a[0])).map(([mKey, recs], idx) => {
                     const profit = recs.reduce((acc, r) => { const tr = Object.values(r.records||{}).reduce((s,v)=>s+(Number(v.total)||0),0); const cc = Object.entries(r.cashCounts||{}).reduce((s,[k,v])=>k==='coins'?s+v:s+(v*Number(k)),0); return acc + ((cc + (Number(r.extraData?.previousCash)||0)) - tr); }, 0);
                     const open = openMonths[mKey];
                     return (
-                        <div key={mKey} className="space-y-2">
-                            <div className={`glass-panel p-4 rounded-3xl flex justify-between items-center bg-white/40 ${open?'ring-2 ring-indigo-200 bg-white/70':''}`}>
-                                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={()=>setOpenMonths(p=>({...p,[mKey]:!p[mKey]}))}><div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${open?'bg-indigo-500 text-white':'bg-indigo-50 text-indigo-400'}`}><Icons.Folder/></div><div><h3 className="font-bold text-slate-700 text-lg">{mKey.split('-')[0]}年 {mKey.split('-')[1]}月</h3><p className="text-[10px] text-slate-500 font-medium">{recs.length} 筆帳目</p></div></div>
-                                <div className="flex items-center gap-3"><div className={`font-black text-lg ${profit>=0?'text-emerald-600':'text-rose-500'}`}>{profit>0?'+':''}{formatCurrency(profit).replace('HK$','')}</div>{isAdmin ? <button onClick={()=>deleteMonth(mKey, recs)} className="w-8 h-8 flex items-center justify-center rounded-full bg-rose-100 text-rose-500"><Icons.Trash2/></button> : <div className="w-8 h-8 flex items-center justify-center text-slate-300"><Icons.Lock/></div>}</div>
+                        <div key={mKey} className={`space-y-2 animate-enter`} style={{animationDelay: `${idx*100}ms`}}>
+                            <div className={`glass-panel p-4 rounded-3xl flex justify-between items-center transition-all duration-300 ${open?'bg-white/80 ring-2 ring-indigo-200 shadow-lg':'hover:bg-white/60'}`}>
+                                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={()=>setOpenMonths(p=>({...p,[mKey]:!p[mKey]}))}><div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-sm ${open?'bg-indigo-500 text-white':'bg-indigo-50 text-indigo-400'}`}><Icons.Folder/></div><div><h3 className="font-bold text-slate-700 text-lg">{mKey.split('-')[0]}年 {mKey.split('-')[1]}月</h3><p className="text-[10px] text-slate-500 font-medium">{recs.length} 筆帳目</p></div></div>
+                                <div className="flex items-center gap-3"><div className={`font-black text-lg ${profit>=0?'text-emerald-600':'text-rose-500'}`}>{profit>0?'+':''}{formatCurrency(profit).replace('HK$','')}</div>{isAdmin ? <button onClick={()=>deleteMonth(mKey, recs)} className="w-8 h-8 flex items-center justify-center rounded-full bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><Icons.Trash2/></button> : <div className="w-8 h-8 flex items-center justify-center text-slate-300"><Icons.Lock/></div>}</div>
                             </div>
-                            {open && <div className="space-y-3 pl-4 border-l-2 border-indigo-100/50 ml-6 pt-2">{recs.map(r => {
+                            {open && <div className="space-y-3 pl-4 border-l-2 border-indigo-100/50 ml-6 pt-2">{recs.map((r, i) => {
                                 const tr = Object.values(r.records||{}).reduce((s,v)=>s+(Number(v.total)||0),0); const cc = Object.entries(r.cashCounts||{}).reduce((s,[k,v])=>k==='coins'?s+v:s+(v*Number(k)),0); const p = (cc + (Number(r.extraData?.previousCash)||0)) - tr;
-                                return (<div key={r.date} className="glass-panel p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-white/60 ml-2" onClick={()=>{setSelectedDate(r.date);setActiveTab('input');}}><div className="flex items-center gap-3"><span className="font-bold text-slate-700">{r.date.substring(8)}日</span><span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-400">查看</span></div><div className="flex items-center gap-3"><span className={`font-black ${p>=0?'text-emerald-500':'text-rose-500'}`}>{Math.round(p)}</span>{isAdmin ? <button onClick={(e)=>{e.stopPropagation();deleteRecord(r.date);}} className="p-2 text-slate-300 hover:text-rose-500"><Icons.Trash2/></button> : <span className="p-2 text-slate-300"><Icons.Lock/></span>}</div></div>)
+                                return (<div key={r.date} className="glass-panel p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-white/60 ml-2 animate-enter" style={{animationDelay: `${i*50}ms`}} onClick={()=>{setSelectedDate(r.date);setActiveTab('input');}}><div className="flex items-center gap-3"><span className="font-bold text-slate-700">{r.date.substring(8)}日</span><span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-400">查看</span></div><div className="flex items-center gap-3"><span className={`font-black ${p>=0?'text-emerald-500':'text-rose-500'}`}>{Math.round(p)}</span>{isAdmin ? <button onClick={(e)=>{e.stopPropagation();deleteRecord(r.date);}} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"><Icons.Trash2/></button> : <span className="p-2 text-slate-300"><Icons.Lock/></span>}</div></div>)
                             })}</div>}
                         </div>
                     );
@@ -319,29 +368,29 @@ const App = () => {
     };
 
     const renderSettings = () => (
-        <div className="space-y-4 animate-fade-in">
-            <h2 className="text-3xl font-black text-slate-800 px-1">機台設定</h2>
+        <div className="space-y-4 animate-enter">
+            <h2 className="text-3xl font-black text-slate-800 px-1 text-shimmer">機台設定</h2>
             {!isAdmin && <div className="bg-slate-200/80 p-4 rounded-2xl text-sm font-bold text-slate-600 flex items-center justify-center gap-2 mb-4"><Icons.Lock/> 設定已鎖定 (訪客模式)</div>}
             <div className="space-y-3">{machines.map((m, i) => (
-                <div key={m.id} className={`glass-panel p-4 rounded-3xl flex gap-3 items-center ${!isAdmin?'locked-element':''}`}>
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center font-bold text-lg shrink-0">{m.id}</div>
-                    <div className="flex-1 space-y-2"><input disabled={!isAdmin} value={m.name} onChange={e=>{const n=[...machines];n[i].name=e.target.value;setMachines(n)}} className="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 outline-none font-bold text-slate-700"/><div className="flex gap-2"><input disabled={!isAdmin} placeholder="台主" value={m.owner} onChange={e=>{const n=[...machines];n[i].owner=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none"/><input disabled={!isAdmin} placeholder="電話" value={m.phone} onChange={e=>{const n=[...machines];n[i].phone=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none text-right"/></div></div>
-                    {isAdmin ? <button onClick={async()=>{if(confirm('刪除?'))await db.collection('machines').doc(m.id).delete()}} className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500"><Icons.Trash2/></button> : <span className="text-slate-300"><Icons.Lock/></span>}
+                <div key={m.id} className={`glass-panel p-4 rounded-3xl flex gap-3 items-center animate-enter ${!isAdmin?'locked-element':''}`} style={{animationDelay: `${i*50}ms`}}>
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center font-bold text-lg shrink-0 shadow-inner">{m.id}</div>
+                    <div className="flex-1 space-y-2"><input disabled={!isAdmin} value={m.name} onChange={e=>{const n=[...machines];n[i].name=e.target.value;setMachines(n)}} className="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 outline-none font-bold text-slate-700 text-lg"/><div className="flex gap-2"><input disabled={!isAdmin} placeholder="台主" value={m.owner} onChange={e=>{const n=[...machines];n[i].owner=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none font-medium"/><input disabled={!isAdmin} placeholder="電話" value={m.phone} onChange={e=>{const n=[...machines];n[i].phone=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none text-right font-medium"/></div></div>
+                    {isAdmin ? <button onClick={async()=>{if(confirm('刪除?'))await db.collection('machines').doc(m.id).delete()}} className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><Icons.Trash2/></button> : <span className="text-slate-300"><Icons.Lock/></span>}
                 </div>
             ))}</div>
-            {isAdmin ? <><button onClick={async()=>{const newId=(machines.reduce((max,m)=>Math.max(max,parseInt(m.id)||0),0)+1).toString();await db.collection('machines').doc(newId).set({id:newId,name:`機台 ${newId}`,coinValue:5})}} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2"><Icons.Plus/> 新增機台</button><button onClick={async()=>{for(const m of machines)await db.collection('machines').doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95">儲存設定</button></> : <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2"><Icons.Lock/> 權限不足</button>}
+            {isAdmin ? <><button onClick={async()=>{const newId=(machines.reduce((max,m)=>Math.max(max,parseInt(m.id)||0),0)+1).toString();await db.collection('machines').doc(newId).set({id:newId,name:`機台 ${newId}`,coinValue:5})}} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button><button onClick={async()=>{for(const m of machines)await db.collection('machines').doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95 transition-all">儲存設定</button></> : <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2"><Icons.Lock/> 權限不足</button>}
         </div>
     );
 
     return (
         <div className="min-h-screen">
-            <div className="glass-nav sticky top-0 z-40 mb-6"><div className="max-w-lg mx-auto px-5 py-4 flex justify-between items-center"><div><h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">娛樂基地</h1><p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Pro Management</p></div><div className="flex items-center gap-3"><div className="text-xs font-bold bg-slate-100/80 px-3 py-1.5 rounded-full text-slate-600">{selectedDate}</div><button onClick={()=>isAdmin?handleLogout():setShowLogin(true)} className={`p-2 rounded-full transition-all ${isAdmin?'bg-indigo-100 text-indigo-600':'bg-slate-200 text-slate-500'}`}>{isAdmin?<Icons.Unlock/>:<Icons.Lock/>}</button></div></div></div>
-            {showLogin && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"><div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm"><div className="flex justify-between items-center mb-6"><h3 className="text-xl font-black text-slate-800">管理員登入</h3><button onClick={()=>setShowLogin(false)} className="text-slate-400"><Icons.Close/></button></div><form onSubmit={handleLogin} className="space-y-4"><input type="text" placeholder="帳號" value={username} onChange={e=>setUsername(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-700"/><input type="password" placeholder="密碼" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-700"/><button type="submit" className="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg">登入</button></form></div></div>}
+            <div className="glass-nav sticky top-0 z-40 mb-6"><div className="max-w-lg mx-auto px-5 py-4 flex justify-between items-center"><div><h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 tracking-tighter">娛樂基地</h1><p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Pro Management</p></div><div className="flex items-center gap-3"><div className="text-xs font-bold bg-slate-100/80 px-3 py-1.5 rounded-full text-slate-600 shadow-sm border border-white/50">{selectedDate}</div><button onClick={()=>isAdmin?handleLogout():setShowLogin(true)} className={`p-2 rounded-full transition-all active:scale-95 ${isAdmin?'bg-indigo-100 text-indigo-600 shadow-inner':'bg-white shadow-sm text-slate-400'}`}>{isAdmin?<Icons.Unlock/>:<Icons.Lock/>}</button></div></div></div>
+            {showLogin && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-enter"><div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm border border-white/50"><div className="flex justify-between items-center mb-6"><h3 className="text-xl font-black text-slate-800">管理員登入</h3><button onClick={()=>setShowLogin(false)} className="text-slate-400 hover:text-slate-600"><Icons.Close/></button></div><form onSubmit={handleLogin} className="space-y-4"><input type="text" placeholder="帳號" value={username} onChange={e=>setUsername(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-700 border border-transparent focus:border-indigo-500 transition-all"/><input type="password" placeholder="密碼" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-700 border border-transparent focus:border-indigo-500 transition-all"/><button type="submit" className="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-indigo-500/30 active:scale-95 transition-all">登入</button></form></div></div>}
             
             <Toast show={toast.show} msg={toast.msg} />
 
-            <div className="px-4 max-w-lg mx-auto pb-[400px]">{loading?<div className="flex flex-col items-center py-20"><div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin"></div></div>:(activeTab==='input'?renderInput():activeTab==='history'?renderHistory():renderSettings())}</div>
-            <div className="glass-nav fixed bottom-0 left-0 right-0 pb-safe z-30 h-[80px] flex items-center"><div className="flex justify-around w-full max-w-lg mx-auto"><button onClick={()=>setActiveTab('input')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-20 h-16 ${activeTab==='input'?'text-indigo-600 bg-indigo-50/50 scale-105':'text-slate-400'}`}><Icons.LayoutDashboard/><span className="text-[10px] font-bold mt-1">輸入</span></button><button onClick={()=>setActiveTab('history')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-20 h-16 ${activeTab==='history'?'text-indigo-600 bg-indigo-50/50 scale-105':'text-slate-400'}`}><Icons.History/><span className="text-[10px] font-bold mt-1">歷史</span></button><button onClick={()=>setActiveTab('settings')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-20 h-16 ${activeTab==='settings'?'text-indigo-600 bg-indigo-50/50 scale-105':'text-slate-400'}`}><Icons.Settings/><span className="text-[10px] font-bold mt-1">設定</span></button></div></div>
+            <div className="px-4 max-w-lg mx-auto pb-[400px]">{loading?<div className="flex flex-col items-center justify-center py-40 space-y-4"><div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div><div className="text-sm font-bold text-slate-400 animate-pulse">系統載入中...</div></div>:(activeTab==='input'?renderInput():activeTab==='history'?renderHistory():renderSettings())}</div>
+            <div className="glass-nav fixed bottom-0 left-0 right-0 pb-safe z-30 h-[80px] flex items-center"><div className="flex justify-around w-full max-w-lg mx-auto"><button onClick={()=>setActiveTab('input')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-20 h-16 transition-all duration-300 ${activeTab==='input'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.LayoutDashboard/><span className="text-[10px] font-bold mt-1">輸入</span></button><button onClick={()=>setActiveTab('history')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-20 h-16 transition-all duration-300 ${activeTab==='history'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.History/><span className="text-[10px] font-bold mt-1">歷史</span></button><button onClick={()=>setActiveTab('settings')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-20 h-16 transition-all duration-300 ${activeTab==='settings'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.Settings/><span className="text-[10px] font-bold mt-1">設定</span></button></div></div>
         </div>
     );
 };
@@ -349,5 +398,4 @@ const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<
 </script>
 </body>
 </html>
-
-
+```eof
