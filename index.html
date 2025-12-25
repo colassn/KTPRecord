@@ -77,7 +77,8 @@ const Icons = {
     Send: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>,
     Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
     Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-    ArrowRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    ArrowRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+    Crown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 4l3 12h14l3-12-6 7-4-13-4 13z"/></svg>
 };
 
 const formatDate = (date) => { let m = '' + (date.getMonth() + 1), d = '' + date.getDate(), y = date.getFullYear(); if (m.length < 2) m = '0' + m; if (d.length < 2) d = '0' + d; return [y, m, d].join('-'); };
@@ -88,80 +89,86 @@ const formatTime = (ts) => { if(!ts) return ''; const d = new Date(ts.seconds * 
 const Toast = ({ show, msg }) => (
     <div className={`fixed bottom-32 left-1/2 -translate-x-1/2 z-50 pointer-events-none toast-box ${show ? 'toast-show' : ''}`}>
         <div className="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 border border-white/10 ring-1 ring-white/20">
-             {msg}
+            <span className="text-emerald-400">✨</span> {msg}
         </div>
     </div>
 );
 
-// --- Summary Table ---
-const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
-    const allIds = useMemo(() => Array.from(new Set([...machines.map(m=>m.id), ...Object.keys(data||{})])).sort((a,b)=>{
-             const nA = parseInt(a), nB = parseInt(b);
-             if(!isNaN(nA) && !isNaN(nB)) return nA - nB;
-             if(!isNaN(nA)) return -1; if(!isNaN(nB)) return 1;
-             return a.localeCompare(b);
-        }), [machines, data]);
-    const machineMap = useMemo(() => { const map={}; machines.forEach(m=>map[m.id]=m); return map; }, [machines]);
-    const totalMachineRevenue = allIds.reduce((sum, id) => { const r = data[id]||{}; return sum + (Number(r.upper)||0) + (Number(r.lower)||0); }, 0);
-    const currentCash = ((cashCounts?.['1000']||0)*1000) + ((cashCounts?.['500']||0)*500) + ((cashCounts?.['100']||0)*100) + ((cashCounts?.['50']||0)*50) + ((cashCounts?.['20']||0)*20) + ((cashCounts?.['10']||0)*10) + (Number(cashCounts?.['coins'])||0);
-    const previousCash = Number(extraData?.previousCash)||0;
-    const totalCash = currentCash + previousCash;
-    const profitLoss = totalCash - totalMachineRevenue;
-
-    return (
-        <div className="glass-panel rounded-3xl overflow-hidden mt-6 shadow-sm animate-enter delay-3">
-            <div className="bg-white/40 px-5 py-4 border-b border-white/40 flex items-center gap-2 backdrop-blur-md">
-                <div className="text-indigo-600 bg-indigo-50 p-1.5 rounded-lg"><Icons.Table /></div>
-                <h3 className="font-bold text-slate-800 text-sm">營收結算表</h3>
-            </div>
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead><tr className="bg-indigo-50/50 text-indigo-900/60 text-[10px] uppercase font-bold tracking-wider"><th className="px-4 py-3 pl-6">機台</th><th className="px-2 py-3 text-right">上數</th><th className="px-2 py-3 text-right">下數</th><th className="px-2 py-3 text-right text-indigo-700">總計</th><th className="px-2 py-3 text-center">派彩</th></tr></thead>
-                    <tbody className="divide-y divide-white/40">
-                        {allIds.map((id, idx) => {
-                            const m = machineMap[id] || {name:`${id} (已刪)`, owner:'-'}; const r = data[id]||{}; const total = (Number(r.upper)||0)+(Number(r.lower)||0);
-                            if(!machineMap[id] && total===0) return null;
-                            return (
-                                <tr key={id} className={`hover:bg-white/40 transition-colors ${idx%2===0?'bg-white/10':''}`}>
-                                    <td className="px-4 py-3 pl-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center text-[10px] font-bold shadow-md`}>{id}</div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-700 flex items-center gap-1">
-                                                    {m.name}
-                                                    {m.isOwnerMachine && <span className="text-[9px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full border border-amber-200">台主</span>}
-                                                </span>
-                                                <span className="text-[10px] text-slate-500">{m.owner}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.upper>0?formatCurrency(r.upper).replace('HK$',''):'-'}</td>
-                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.lower>0?formatCurrency(r.lower).replace('HK$',''):'-'}</td>
-                                    <td className="px-2 py-3 text-right font-bold text-indigo-600 font-mono text-xs tracking-tight">{total>0?formatCurrency(total).replace('HK$',''):'-'}</td>
-                                    <td className="px-2 py-3 text-center"><button disabled={readOnly} onClick={()=>onTogglePaid&&onTogglePaid(id, !r.isPaid)} className={`p-1.5 rounded-lg transition-all active:scale-95 ${readOnly?'':'hover:bg-white/60'}`}>{r.isPaid?<div className="text-emerald-500 drop-shadow-sm"><Icons.CheckSquare/></div>:<div className="text-slate-300"><Icons.Square/></div>}</button></td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-            <div className="bg-white/30 p-5 space-y-2 backdrop-blur-sm">
-                <div className="flex justify-between text-sm"><span className="text-slate-500 font-medium">機台總和</span><span className="font-bold text-slate-700 font-mono">{formatCurrency(totalMachineRevenue)}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>本次紙幣</span><span className="font-bold text-emerald-600 font-mono">+ {formatCurrency(currentCash)}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>上次紙幣</span><span className="font-bold text-blue-600 font-mono">+ {formatCurrency(previousCash)}</span></div>
-                <div className="my-2 border-t border-slate-400/20 border-dashed"></div>
-                <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">現金總數</span><span className="font-black text-slate-800 font-mono text-base">{formatCurrency(totalCash)}</span></div>
-                <div className={`mt-3 p-4 rounded-2xl flex justify-between items-center shadow-inner ring-1 ring-inset transition-colors ${profitLoss>=0?'bg-emerald-50/50 text-emerald-900 ring-emerald-200/50':'bg-rose-50/50 text-rose-900 ring-rose-200/50'}`}>
-                    <span className="font-bold text-xs uppercase tracking-wider opacity-70">盈虧</span><span className="font-black text-2xl tracking-tight font-mono">{profitLoss>0?'+':''}{formatCurrency(profitLoss)}</span>
+// --- Welcome Screen ---
+const WelcomeScreen = ({ onSelect }) => (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-enter relative z-10">
+        <h1 className="text-4xl font-black text-slate-800 mb-2 tracking-tighter">娛樂基地</h1>
+        <p className="text-slate-500 text-sm font-bold tracking-widest uppercase mb-12">Select Store Location</p>
+        
+        <div className="w-full max-w-sm space-y-6">
+            <div onClick={() => onSelect(STORES.kwun_tong)} className="store-card glass-panel p-6 rounded-3xl cursor-pointer hover:bg-white/80 group">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                            <Icons.Store />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">觀塘廣場店</h2>
+                            <p className="text-xs text-slate-500 font-medium">Game-Zone</p>
+                        </div>
+                    </div>
+                    <div className="text-slate-300 group-hover:text-blue-500 transition-colors"><Icons.ArrowRight /></div>
                 </div>
-                <div className="mt-2 text-[10px] text-slate-400 text-center font-medium">兌幣機記錄: {formatCurrency(Number(extraData?.exchangeMachineCash)||0)}</div>
+            </div>
+
+            <div onClick={() => onSelect(STORES.camel_paint)} className="store-card glass-panel p-6 rounded-3xl cursor-pointer hover:bg-white/80 group">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-200">
+                            <Icons.Store />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">駱駝漆店</h2>
+                            <p className="text-xs text-slate-500 font-medium">StayTrue</p>
+                        </div>
+                    </div>
+                    <div className="text-slate-300 group-hover:text-purple-500 transition-colors"><Icons.ArrowRight /></div>
+                </div>
             </div>
         </div>
-    );
+        <div className="mt-12 text-[10px] text-slate-400">v5.8 Multi-Store System</div>
+    </div>
+);
+
+// --- Store Configuration ---
+const STORES = {
+    kwun_tong: {
+        id: 'kwun_tong',
+        name: '觀塘廣場店',
+        engName: 'Game-Zone',
+        color: 'from-blue-500 to-cyan-500',
+        collections: { machines: 'machines', records: 'daily_records', memos: 'memos' }, // Legacy paths
+        defaultMachines: [
+            { id: '1', name: '機台 1', owner: '台主在場', phone: '', coinValue: 5, isOwnerMachine: false },
+            { id: '2', name: '機台 2', owner: '62778117', phone: '62778117', coinValue: 5, isOwnerMachine: false },
+            { id: '3', name: '機台 3', owner: '群組', phone: '91696461', coinValue: 5, isOwnerMachine: false },
+            { id: '4', name: '機台 4', owner: '97859062', phone: '97859062', coinValue: 5, isOwnerMachine: false },
+            { id: '5', name: '機台 5', owner: '大家姐', phone: '', coinValue: 5, isOwnerMachine: false },
+            { id: '6', name: '機台 6', owner: '西裝', phone: '', coinValue: 5, isOwnerMachine: false },
+            { id: '7', name: '機台 7', owner: '大家姐', phone: '', coinValue: 5, isOwnerMachine: false }
+        ]
+    },
+    camel_paint: {
+        id: 'camel_paint',
+        name: '駱駝漆店',
+        engName: 'StayTrue',
+        color: 'from-purple-500 to-pink-500',
+        collections: { machines: 'camel_machines', records: 'camel_daily_records', memos: 'camel_memos' }, // New paths
+        defaultMachines: [
+            ...Array.from({length:15}, (_,i)=>({ id: `${i+1}`, name: `${i+1}`, owner: '', phone: '', coinValue: 5, isOwnerMachine: false })),
+            ...['A','B','C','D','E','F'].map(c=>({ id: c, name: c, owner: '', phone: '', coinValue: 5, isOwnerMachine: false }))
+        ]
+    }
 };
 
-// --- App ---
-const App = () => {
+// --- Main Store App ---
+const StoreApp = ({ storeConfig, onBack }) => {
+    const { collections } = storeConfig;
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState('input');
     const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
@@ -189,7 +196,6 @@ const App = () => {
 
     const handleLogin = (e) => { e.preventDefault(); if(username==='Colason'&&password==='Colason'){ setIsAdmin(true); localStorage.setItem('isAdmin','true'); setShowLogin(false); setUsername(''); setPassword(''); } else alert('錯誤'); };
     const handleLogout = () => { setIsAdmin(false); localStorage.removeItem('isAdmin'); alert('已登出'); };
-
     const showToast = (msg) => { setToast({show:true, msg}); setTimeout(()=>setToast({show:false, msg:''}), 2000); };
 
     // Fetchers
@@ -247,7 +253,7 @@ const App = () => {
     const handleCopy = (m) => {
         const r = dailyData[m.id]||{}; const u = Number(r.upper) || 0; const l = Number(r.lower) || 0; const t = u + l;
         const msg = `今天對幣 (${m.name})：\n上層：$${u}\n下層：$${l}\n總共：$${t}`;
-        navigator.clipboard.writeText(msg).then(() => showToast('已複製到剪貼簿')).catch(() => alert('複製失敗'));
+        navigator.clipboard.writeText(msg).then(() => showToast('已複製到剪貼簿 ✨')).catch(() => alert('複製失敗'));
     };
 
     const saveData = async () => { if (!user || !isAdmin) return; const processed = {}; const allIds = new Set([...machines.map(m=>m.id), ...Object.keys(dailyData)]); allIds.forEach(id => { const r = dailyData[id]||{}; processed[id] = { upper: r.upper||'', lower: r.lower||'', total: (Number(r.upper)||0)+(Number(r.lower)||0), isPaid: r.isPaid||false }; }); await db.collection(collections.records).doc(selectedDate).set({ records: processed, cashCounts, extraData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); alert('資料已儲存！'); };
@@ -263,7 +269,73 @@ const App = () => {
         await db.collection(collections.machines).doc(machine.id).set(updatedMachine);
     };
 
-    // Render Logic
+    // --- Daily Summary Table ---
+    const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
+        const allIds = useMemo(() => Array.from(new Set([...machines.map(m=>m.id), ...Object.keys(data||{})])).sort((a,b)=>{
+             const nA = parseInt(a), nB = parseInt(b);
+             if(!isNaN(nA) && !isNaN(nB)) return nA - nB;
+             if(!isNaN(nA)) return -1; if(!isNaN(nB)) return 1;
+             return a.localeCompare(b);
+        }), [machines, data]);
+        const machineMap = useMemo(() => { const map={}; machines.forEach(m=>map[m.id]=m); return map; }, [machines]);
+        const totalMachineRevenue = allIds.reduce((sum, id) => { const r = data[id]||{}; return sum + (Number(r.upper)||0) + (Number(r.lower)||0); }, 0);
+        const currentCash = ((cashCounts?.['1000']||0)*1000) + ((cashCounts?.['500']||0)*500) + ((cashCounts?.['100']||0)*100) + ((cashCounts?.['50']||0)*50) + ((cashCounts?.['20']||0)*20) + ((cashCounts?.['10']||0)*10) + (Number(cashCounts?.['coins'])||0);
+        const previousCash = Number(extraData?.previousCash)||0;
+        const totalCash = currentCash + previousCash;
+        const profitLoss = totalCash - totalMachineRevenue;
+
+        return (
+            <div className="glass-panel rounded-3xl overflow-hidden mt-6 shadow-sm animate-enter delay-3">
+                <div className="bg-white/40 px-5 py-4 border-b border-white/40 flex items-center gap-2 backdrop-blur-md">
+                    <div className="text-indigo-600 bg-indigo-50 p-1.5 rounded-lg"><Icons.Table /></div>
+                    <h3 className="font-bold text-slate-800 text-sm">營收結算表</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead><tr className="bg-indigo-50/50 text-indigo-900/60 text-[10px] uppercase font-bold tracking-wider"><th className="px-4 py-3 pl-6">機台</th><th className="px-2 py-3 text-right">上數</th><th className="px-2 py-3 text-right">下數</th><th className="px-2 py-3 text-right text-indigo-700">總計</th><th className="px-2 py-3 text-center">派彩</th></tr></thead>
+                        <tbody className="divide-y divide-white/40">
+                            {allIds.map((id, idx) => {
+                                const m = machineMap[id] || {name:`${id} (已刪)`, owner:'-'}; const r = data[id]||{}; const total = (Number(r.upper)||0)+(Number(r.lower)||0);
+                                if(!machineMap[id] && total===0) return null;
+                                return (
+                                    <tr key={id} className={`hover:bg-white/40 transition-colors ${idx%2===0?'bg-white/10':''}`}>
+                                        <td className="px-4 py-3 pl-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center text-[10px] font-bold shadow-md`}>{id}</div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-700 flex items-center gap-1">
+                                                        {m.name}
+                                                        {m.isOwnerMachine && <span className="text-[9px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full border border-amber-200">台主</span>}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-500">{m.owner}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.upper>0?formatCurrency(r.upper).replace('HK$',''):'-'}</td>
+                                        <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.lower>0?formatCurrency(r.lower).replace('HK$',''):'-'}</td>
+                                        <td className="px-2 py-3 text-right font-bold text-indigo-600 font-mono text-xs tracking-tight">{total>0?formatCurrency(total).replace('HK$',''):'-'}</td>
+                                        <td className="px-2 py-3 text-center"><button disabled={readOnly} onClick={()=>onTogglePaid&&onTogglePaid(id, !r.isPaid)} className={`p-1.5 rounded-lg transition-all active:scale-95 ${readOnly?'':'hover:bg-white/60'}`}>{r.isPaid?<div className="text-emerald-500 drop-shadow-sm"><Icons.CheckSquare/></div>:<div className="text-slate-300"><Icons.Square/></div>}</button></td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="bg-white/30 p-5 space-y-2 backdrop-blur-sm">
+                    <div className="flex justify-between text-sm"><span className="text-slate-500 font-medium">機台總和</span><span className="font-bold text-slate-700 font-mono">{formatCurrency(totalMachineRevenue)}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>本次紙幣</span><span className="font-bold text-emerald-600 font-mono">+ {formatCurrency(currentCash)}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>上次紙幣</span><span className="font-bold text-blue-600 font-mono">+ {formatCurrency(previousCash)}</span></div>
+                    <div className="my-2 border-t border-slate-400/20 border-dashed"></div>
+                    <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">現金總數</span><span className="font-black text-slate-800 font-mono text-base">{formatCurrency(totalCash)}</span></div>
+                    <div className={`mt-3 p-4 rounded-2xl flex justify-between items-center shadow-inner ring-1 ring-inset transition-colors ${profitLoss>=0?'bg-emerald-50/50 text-emerald-900 ring-emerald-200/50':'bg-rose-50/50 text-rose-900 ring-rose-200/50'}`}>
+                        <span className="font-bold text-xs uppercase tracking-wider opacity-70">盈虧</span><span className="font-black text-2xl tracking-tight font-mono">{profitLoss>0?'+':''}{formatCurrency(profitLoss)}</span>
+                    </div>
+                    <div className="mt-2 text-[10px] text-slate-400 text-center font-medium">兌幣機記錄: {formatCurrency(Number(extraData?.exchangeMachineCash)||0)}</div>
+                </div>
+            </div>
+        );
+    };
+
     const renderInput = () => {
         const totalRev = machines.reduce((s,m) => s + (Number(dailyData[m.id]?.upper)||0) + (Number(dailyData[m.id]?.lower)||0), 0);
         const currCash = ((cashCounts['1000']||0)*1000)+((cashCounts['500']||0)*500)+((cashCounts['100']||0)*100)+((cashCounts['50']||0)*50)+((cashCounts['20']||0)*20)+((cashCounts['10']||0)*10)+(Number(cashCounts['coins'])||0);
@@ -283,7 +355,7 @@ const App = () => {
                         const d = dailyData[m.id]||{}; const cv = m.coinValue||5; const sub = (Number(d.upper)||0)+(Number(d.lower)||0);
                         return (
                             <div key={m.id} className={`glass-panel rounded-3xl overflow-hidden animate-enter ${!isAdmin?'locked-element':''}`} style={{animationDelay: `${(i+1)*30}ms`}}>
-                                <div className="bg-white/40 px-5 py-4 border-b border-white/50 flex justify-between items-center"><div className="flex items-center gap-3"><div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center font-bold text-lg shadow-lg`}>{m.id}</div><div><h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">{m.name} {m.isOwnerMachine && <span className="bg-amber-100 text-amber-600 text-[10px] px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1 shadow-sm">台主</span>}</h3><p className="text-[11px] text-slate-500 font-medium">幣值: ${cv}</p></div></div><div className="text-right"><span className="text-[10px] text-slate-400 block font-bold">小計</span><span className="font-black text-indigo-600 text-xl">{formatCurrency(sub).replace('HK$','')}</span></div></div>
+                                <div className="bg-white/40 px-5 py-4 border-b border-white/50 flex justify-between items-center"><div className="flex items-center gap-3"><div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center font-bold text-lg shadow-lg`}>{m.id}</div><div><h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">{m.name} {m.isOwnerMachine && <span className="bg-amber-100 text-amber-600 text-[10px] px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1 shadow-sm"><Icons.Crown /> 台主</span>}</h3><p className="text-[11px] text-slate-500 font-medium">幣值: ${cv}</p></div></div><div className="text-right"><span className="text-[10px] text-slate-400 block font-bold">小計</span><span className="font-black text-indigo-600 text-xl">{formatCurrency(sub).replace('HK$','')}</span></div></div>
                                 <div className="p-5 grid grid-cols-2 gap-4">
                                     <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400">上層個數</label><input disabled={!isAdmin} type="number" placeholder="0" value={d.upper?(Number(d.upper)/cv):''} onChange={e=>handleCountChange(m.id,'upper',e.target.value,cv)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/><div className="text-center text-[10px] text-slate-400">= ${Number(d.upper)||0}</div></div>
                                     <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400">下層個數</label><input disabled={!isAdmin} type="number" placeholder="0" value={d.lower?(Number(d.lower)/cv):''} onChange={e=>handleCountChange(m.id,'lower',e.target.value,cv)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/><div className="text-center text-[10px] text-slate-400">= ${Number(d.lower)||0}</div></div>
