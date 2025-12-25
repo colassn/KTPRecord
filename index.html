@@ -167,7 +167,17 @@ const App = () => {
 
     // Handlers
     const handleCountChange = (id, field, val, coinVal) => { if (!isAdmin) return; const amt = isNaN(parseFloat(val)) ? '' : parseFloat(val) * (coinVal || 5); setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), [field]: amt } })); };
-    const handleWhatsApp = (m) => { const r = dailyData[m.id]||{}; const cv = m.coinValue||5; const u = r.upper?(Number(r.upper)/cv):0; const l = r.lower?(Number(r.lower)/cv):0; if(!m.phone) return alert('請先在「設定」輸入電話'); const msg = `本次對幣：\n機台：${m.name}\n上層：${u}個\n下層：${l}個\n總共：${u+l}個\n總額：$${(Number(r.upper)||0)+(Number(r.lower)||0)}`; window.open(`https://wa.me/${m.phone.replace(/\s+/g,'')}?text=${encodeURIComponent(msg)}`, '_blank'); };
+    const handleWhatsApp = (m) => { 
+        const r = dailyData[m.id]||{}; 
+        const upperVal = Number(r.upper) || 0;
+        const lowerVal = Number(r.lower) || 0;
+        const totalVal = upperVal + lowerVal;
+
+        if(!m.phone) return alert('請先在「設定」輸入電話');
+        
+        const msg = `今天對幣：\n上層：$${upperVal}\n下層：$${lowerVal}\n總共：$${totalVal}`;
+        window.open(`https://wa.me/${m.phone.replace(/\s+/g,'')}?text=${encodeURIComponent(msg)}`, '_blank'); 
+    };
     const saveData = async () => { if (!user || !isAdmin) return; const processed = {}; const allIds = new Set([...machines.map(m=>m.id), ...Object.keys(dailyData)]); allIds.forEach(id => { const r = dailyData[id]||{}; processed[id] = { upper: r.upper||'', lower: r.lower||'', total: (Number(r.upper)||0)+(Number(r.lower)||0), isPaid: r.isPaid||false }; }); await db.collection('daily_records').doc(selectedDate).set({ records: processed, cashCounts, extraData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); alert('資料已儲存！'); };
     const deleteRecord = async (date) => { if(!isAdmin) return; if(confirm(`刪除 ${date} 紀錄？`)) await db.collection('daily_records').doc(date).delete(); };
     const deleteMonth = async (month, recs) => { if(!isAdmin) return; if(confirm(`刪除 ${month} 所有資料 (${recs.length}筆)？`)) { const batch = db.batch(); recs.forEach(r => batch.delete(db.collection('daily_records').doc(r.date))); await batch.commit(); alert('已刪除月份資料'); } };
