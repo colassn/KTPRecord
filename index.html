@@ -201,8 +201,19 @@ const App = () => {
                 <div className="glass-panel p-2 rounded-2xl flex items-center relative overflow-hidden">
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-400 to-purple-500"></div>
                     <div className="pl-4 py-3 flex-1"><label className="block text-[10px] font-bold text-indigo-500/80 uppercase">選擇日期</label><div className="font-black text-slate-700 text-xl flex items-center gap-2"><span className="text-indigo-500"><Icons.Calendar/></span>{selectedDate}</div></div>
-                    <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full"/>
-                    <div className="pr-4 text-indigo-400"><Icons.ChevronDown/></div>
+                    
+                    {/* Today Button - Higher Z-Index to be clickable */}
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation(); 
+                            setSelectedDate(formatDate(new Date()));
+                        }}
+                        className="relative z-20 mr-2 bg-white/50 hover:bg-white text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm backdrop-blur-sm border border-white/50 transition-all active:scale-95"
+                    >
+                        今天
+                    </button>
+
+                    <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full z-10 cursor-pointer"/>
                 </div>
                 {!isAdmin && <div className="bg-slate-200/80 p-3 rounded-xl text-xs text-slate-600 text-center flex items-center justify-center gap-2"><Icons.Lock/> 訪客模式：只能查看，無法編輯</div>}
                 
