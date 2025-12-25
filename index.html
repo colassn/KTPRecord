@@ -134,7 +134,7 @@ const WelcomeScreen = ({ onSelect }) => (
                 </div>
             </div>
         </div>
-        <div className="mt-12 text-[10px] text-slate-400">v6.3 Pro Edition</div>
+        <div className="mt-12 text-[10px] text-slate-400">v6.4 Manual Add System</div>
     </div>
 );
 
@@ -145,7 +145,7 @@ const STORES = {
         name: '觀塘廣場店',
         engName: 'Game-Zone',
         color: 'from-blue-500 to-cyan-500',
-        collections: { machines: 'machines', records: 'daily_records', memos: 'memos', links: 'links' }, // Added links
+        collections: { machines: 'machines', records: 'daily_records', memos: 'memos', links: 'links' }, // Legacy paths
         defaultMachines: [
             { id: '1', name: '機台 1', owner: '台主在場', phone: '', coinValue: 5, isOwnerMachine: false, inputMode: 'dual' },
             { id: '2', name: '機台 2', owner: '62778117', phone: '62778117', coinValue: 5, isOwnerMachine: false, inputMode: 'dual' },
@@ -161,7 +161,7 @@ const STORES = {
         name: '駱駝漆店',
         engName: 'StayTrue',
         color: 'from-purple-500 to-pink-500',
-        collections: { machines: 'camel_machines', records: 'camel_daily_records', memos: 'camel_memos', links: 'camel_links' }, // Added links
+        collections: { machines: 'camel_machines', records: 'camel_daily_records', memos: 'camel_memos', links: 'camel_links' }, // New paths
         defaultMachines: [
             ...Array.from({length:15}, (_,i)=>({ id: `${i+1}`, name: `${i+1}`, owner: '', phone: '', coinValue: 5, isOwnerMachine: false, inputMode: 'single' })),
             ...['A','B','C','D','E','F'].map(c=>({ id: c, name: c, owner: '', phone: '', coinValue: 5, isOwnerMachine: false, inputMode: 'dual' }))
@@ -180,7 +180,7 @@ const StoreApp = ({ storeConfig, onBack }) => {
     const [extraData, setExtraData] = useState({ previousCash: '', exchangeMachineCash: '' });
     const [historyData, setHistoryData] = useState([]);
     const [memos, setMemos] = useState([]);
-    const [links, setLinks] = useState([]); // New Links State
+    const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [cashCounts, setCashCounts] = useState({ '1000': 0, '500': 0, '100': 0, '50': 0, '20': 0, '10': 0, 'coins': 0 });
     const [openMonths, setOpenMonths] = useState({});
@@ -323,6 +323,29 @@ const StoreApp = ({ storeConfig, onBack }) => {
         await db.collection(collections.machines).doc(machine.id).set(updatedMachine);
     };
 
+    // MANUAL ADD MACHINE
+    const handleAddMachine = async () => {
+        const defaultId = (machines.reduce((max,m)=>{const n=parseInt(m.id); return isNaN(n)?max:Math.max(max,n);},0)+1).toString();
+        const id = prompt("請輸入新機台編號 (例如: 16 或 G)", defaultId);
+        if (!id) return;
+        if (machines.some(m => m.id === id)) return alert('機台編號已存在！');
+
+        try {
+            await db.collection(collections.machines).doc(id).set({
+                id: id,
+                name: storeConfig.id === 'kwun_tong' ? `機台 ${id}` : id, // Camel uses just ID as name
+                owner: '', 
+                phone: '', 
+                coinValue: 5,
+                isOwnerMachine: false
+            });
+            alert(`成功新增機台：${id}`);
+        } catch (e) {
+            console.error(e);
+            alert('新增失敗: ' + e.message);
+        }
+    };
+    
     // Links Handlers
     const handleAddLink = async () => {
         const title = prompt("請輸入工具名稱：");
@@ -551,20 +574,83 @@ const StoreApp = ({ storeConfig, onBack }) => {
     const renderSettings = () => (
         <div className="space-y-4 animate-enter">
             <h2 className="text-3xl font-black text-slate-800 px-1 text-shimmer">機台設定</h2>
+            
+            {/* 訪客提示 */}
             {!isAdmin && <div className="bg-slate-200/80 p-4 rounded-2xl text-sm font-bold text-slate-600 flex items-center justify-center gap-2 mb-4"><Icons.Lock/> 設定已鎖定 (訪客模式)</div>}
-            <div className="space-y-3">{machines.map((m, i) => (
-                <div key={m.id} className={`glass-panel p-4 rounded-3xl flex flex-col gap-3 animate-enter ${!isAdmin?'locked-element':''}`} style={{animationDelay: `${i*50}ms`}}>
+
+            <div className="space-y-3">
+                {machines.map((m, i) => (
+                <div key={m.id} className="glass-panel p-4 rounded-3xl flex flex-col gap-3 animate-enter" style={{animationDelay: `${i*50}ms`}}>
                     <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-inner`}>{m.id}</div>
-                        <div className="flex-1 space-y-2"><input disabled={!isAdmin} value={m.name} onChange={e=>{const n=[...machines];n[i].name=e.target.value;setMachines(n)}} className="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 outline-none font-bold text-slate-700 text-lg"/><div className="flex gap-2"><input disabled={!isAdmin} placeholder="台主" value={m.owner} onChange={e=>{const n=[...machines];n[i].owner=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none"/><input disabled={!isAdmin} placeholder="電話" value={m.phone} onChange={e=>{const n=[...machines];n[i].phone=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none text-right"/></div></div>
+                        
+                        <div className="flex-1 space-y-2">
+                             {/* 機台名稱 input - ReadOnly if !isAdmin */}
+                             <input 
+                                disabled={!isAdmin} 
+                                value={m.name} 
+                                onChange={e=>{const n=[...machines];n[i].name=e.target.value;setMachines(n)}} 
+                                className={`w-full bg-transparent border-b outline-none font-bold text-slate-700 text-lg ${!isAdmin ? 'border-transparent' : 'border-slate-200 focus:border-indigo-500'}`}
+                             />
+                             
+                             <div className="flex gap-2">
+                                <input 
+                                    disabled={!isAdmin} 
+                                    placeholder="台主" 
+                                    value={m.owner} 
+                                    onChange={e=>{const n=[...machines];n[i].owner=e.target.value;setMachines(n)}} 
+                                    className={`text-xs w-full rounded-lg px-2 py-1.5 border-none font-medium ${!isAdmin ? 'bg-slate-100 text-slate-500' : 'bg-slate-50/50'}`}
+                                />
+                                <input 
+                                    disabled={!isAdmin} 
+                                    placeholder="電話" 
+                                    value={m.phone} 
+                                    onChange={e=>{const n=[...machines];n[i].phone=e.target.value;setMachines(n)}} 
+                                    className={`text-xs w-full rounded-lg px-2 py-1.5 border-none text-right font-medium ${!isAdmin ? 'bg-slate-100 text-slate-500' : 'bg-slate-50/50'}`}
+                                />
+                             </div>
+                        </div>
+
+                        {/* Delete Button - Only Admin */}
+                        {isAdmin ? (
+                            <button onClick={async()=>{if(confirm('刪除?'))await db.collection(collections.machines).doc(m.id).delete()}} className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><Icons.Trash2/></button>
+                        ) : (
+                            <span className="text-slate-300"><Icons.Lock/></span>
+                        )}
                     </div>
-                    {isAdmin && <div className="flex justify-end pt-2 border-t border-slate-100/50 gap-2">
-                        <button onClick={() => toggleOwnerMachine(m)} className={`text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 transition-all ${m.isOwnerMachine ? 'bg-amber-100 text-amber-600 ring-1 ring-amber-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}><Icons.Crown /> {m.isOwnerMachine ? '已設為台主機' : '設為台主機'}</button>
-                        <button onClick={async()=>{if(confirm('刪除?'))await db.collection(collections.machines).doc(m.id).delete()}} className="text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 transition-all bg-rose-100 text-rose-600 ring-1 ring-rose-200 hover:bg-rose-200"><Icons.Trash2/> 刪除</button>
-                    </div>}
+
+                    {/* 台主機 Toggle - Only Admin */}
+                    {isAdmin && (
+                        <div className="flex justify-end pt-2 border-t border-slate-100/50">
+                             <button onClick={() => toggleOwnerMachine(m)} className={`text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 transition-all ${m.isOwnerMachine ? 'bg-amber-100 text-amber-600 ring-1 ring-amber-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
+                                <Icons.Crown /> {m.isOwnerMachine ? '已設為台主機' : '設為台主機'}
+                             </button>
+                        </div>
+                    )}
+                    {/* For guests, we can show a badge if it is an owner machine, or nothing */}
+                    {!isAdmin && m.isOwnerMachine && (
+                        <div className="flex justify-end pt-2 border-t border-slate-100/50">
+                             <span className="text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 bg-amber-100 text-amber-600 border border-amber-200">
+                                台主機
+                             </span>
+                        </div>
+                    )}
                 </div>
             ))}</div>
-            {isAdmin ? <><button onClick={handleAddMachine} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button><button onClick={async()=>{for(const m of machines)await db.collection(collections.machines).doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95">儲存設定</button></> : <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2"><Icons.Lock/> 權限不足</button>}
+
+            {/* Bottom Buttons */}
+            {isAdmin ? (
+                <>
+                <button onClick={handleAddMachine} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button>
+                <button onClick={async()=>{for(const m of machines)await db.collection(collections.machines).doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95 transition-all">儲存設定</button>
+                </>
+            ) : (
+                <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2">
+                    <Icons.Lock/> 權限不足
+                </button>
+            )}
+            
+            <div className="h-40"></div>
         </div>
     );
     
@@ -587,7 +673,7 @@ const StoreApp = ({ storeConfig, onBack }) => {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                             <div className="text-slate-300 group-hover:text-emerald-500 transition-colors"><Icons.ExternalLink /></div>
+                             <div className="text-slate-300 group-hover:text-emerald-500 transition-colors"><Icons.ArrowRight /></div>
                              {isAdmin && (
                                 <div className="flex flex-col gap-2 ml-2" onClick={(e) => e.stopPropagation()}>
                                     <button onClick={() => handleEditLink(link)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:text-blue-500 hover:bg-blue-50"><Icons.Edit /></button>
