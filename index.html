@@ -32,6 +32,13 @@ body { font-family: -apple-system, "SF Pro Display", "Noto Sans TC", sans-serif;
 .glass-input { background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.5); transition: all 0.3s ease; }
 .glass-input:focus { background: rgba(255, 255, 255, 0.8); border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2); }
 
+/* Toast Notification Animation */
+@keyframes slide-up-fade {
+    0% { transform: translate(-50%, 100%); opacity: 0; }
+    100% { transform: translate(-50%, 0); opacity: 1; }
+}
+.toast-anim { animation: slide-up-fade 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
 .locked-element { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -60,19 +67,30 @@ const Icons = {
     Table: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>,
     CheckSquare: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
     Square: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
-    Whatsapp: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
     Folder: () => <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
     Empty: () => <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
     Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
     Unlock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>,
     Close: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
     Message: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>,
-    Send: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    Send: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>,
+    Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
 };
 
 const formatDate = (date) => { let m = '' + (date.getMonth() + 1), d = '' + date.getDate(), y = date.getFullYear(); if (m.length < 2) m = '0' + m; if (d.length < 2) d = '0' + d; return [y, m, d].join('-'); };
 const formatCurrency = (n) => { if(isNaN(n) || n === null) return '$0'; return new Intl.NumberFormat('zh-HK', { style: 'currency', currency: 'HKD', minimumFractionDigits: 0 }).format(n); };
 const formatTime = (ts) => { if(!ts) return ''; const d = new Date(ts.seconds * 1000); return `${d.getMonth()+1}月${d.getDate()}日 ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; };
+
+// --- Toast Component ---
+const Toast = ({ show, msg }) => {
+    return (
+        <div className={`fixed bottom-32 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none ${show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 border border-white/10">
+                <span className="text-emerald-400">✨</span> {msg}
+            </div>
+        </div>
+    );
+};
 
 // --- Summary Table ---
 const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
@@ -139,6 +157,7 @@ const App = () => {
     const [showLogin, setShowLogin] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [toast, setToast] = useState({ show: false, msg: '' });
     
     // Memo Inputs
     const [memoName, setMemoName] = useState('');
@@ -150,55 +169,32 @@ const App = () => {
     const handleLogin = (e) => { e.preventDefault(); if(username==='Colason'&&password==='Colason'){ setIsAdmin(true); localStorage.setItem('isAdmin','true'); setShowLogin(false); setUsername(''); setPassword(''); } else alert('錯誤'); };
     const handleLogout = () => { setIsAdmin(false); localStorage.removeItem('isAdmin'); alert('已登出'); };
 
+    const showToast = (msg) => { setToast({show:true, msg}); setTimeout(()=>setToast({show:false, msg:''}), 2000); };
+
     // Fetchers
     useEffect(() => { if (!user) return; return db.collection('machines').onSnapshot(snap => { if (snap.empty) { const defaults = [{ id: '1', name: '機台 1', owner: '台主在場', phone: '60299392', coinValue: 5 }, { id: '2', name: '機台 2', owner: '62778117', phone: '62778117', coinValue: 5 }, { id: '3', name: '機台 3', owner: '群組', phone: '91696461', coinValue: 5 }, { id: '4', name: '機台 4', owner: '97859062', phone: '97859062', coinValue: 5 }, { id: '5', name: '機台 5', owner: '大家姐', phone: '', coinValue: 5 }, { id: '6', name: '機台 6', owner: '西裝', phone: '', coinValue: 5 }, { id: '7', name: '機台 7', owner: '大家姐', phone: '', coinValue: 5 }]; defaults.forEach(m => db.collection('machines').doc(m.id).set(m)); setMachines(defaults); } else { const loaded = snap.docs.map(d => ({id: d.id, ...d.data()})); loaded.sort((a,b) => parseInt(a.id)-parseInt(b.id)); setMachines(loaded); } setLoading(false); }); }, [user]);
     useEffect(() => { if (!user) return; return db.collection('daily_records').doc(selectedDate).onSnapshot(doc => { if (doc.exists) { const d = doc.data(); setDailyData(d.records||{}); setCashCounts(d.cashCounts||{ '1000': 0, '500': 0, '100': 0, '50': 0, '20': 0, '10': 0, 'coins': 0 }); setExtraData(d.extraData||{ previousCash: '', exchangeMachineCash: '' }); } else { setDailyData({}); setCashCounts({ '1000': 0, '500': 0, '100': 0, '50': 0, '20': 0, '10': 0, 'coins': 0 }); setExtraData({ previousCash: '', exchangeMachineCash: '' }); } }); }, [user, selectedDate]);
     useEffect(() => { if (!user) return; return db.collection('daily_records').onSnapshot(snap => { const recs = snap.docs.map(d => ({ date: d.id, ...d.data() })).filter(r => r.date.match(/^\d{4}-\d{2}-\d{2}$/)); recs.sort((a, b) => b.date.localeCompare(a.date)); setHistoryData(recs); }); }, [user]);
     useEffect(() => { if (historyData.length > 0 && Object.keys(openMonths).length === 0) setOpenMonths({ [historyData[0].date.substring(0, 7)]: true }); }, [historyData]);
-    
-    // Memos Fetcher
-    useEffect(() => {
-        if (!user) return;
-        return db.collection('memos').orderBy('createdAt', 'desc').onSnapshot(snap => {
-            const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            setMemos(list);
-        });
-    }, [user]);
+    useEffect(() => { if (!user) return; return db.collection('memos').orderBy('createdAt', 'desc').onSnapshot(snap => { const list = snap.docs.map(d => ({ id: d.id, ...d.data() })); setMemos(list); }); }, [user]);
 
     // Handlers
     const handleCountChange = (id, field, val, coinVal) => { if (!isAdmin) return; const amt = isNaN(parseFloat(val)) ? '' : parseFloat(val) * (coinVal || 5); setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), [field]: amt } })); };
-    const handleWhatsApp = (m) => { 
+    
+    const handleCopy = (m) => {
         const r = dailyData[m.id]||{}; 
-        const upperVal = Number(r.upper) || 0;
-        const lowerVal = Number(r.lower) || 0;
-        const totalVal = upperVal + lowerVal;
-
-        if(!m.phone) return alert('請先在「設定」輸入電話');
-        
-        const msg = `今天對幣：\n上層：$${upperVal}\n下層：$${lowerVal}\n總共：$${totalVal}`;
-        window.open(`https://wa.me/${m.phone.replace(/\s+/g,'')}?text=${encodeURIComponent(msg)}`, '_blank'); 
+        const u = Number(r.upper) || 0;
+        const l = Number(r.lower) || 0;
+        const t = u + l;
+        const msg = `今天對幣 (${m.name})：\n上層：$${u}\n下層：$${l}\n總共：$${t}`;
+        navigator.clipboard.writeText(msg).then(() => showToast('已複製到剪貼簿 ✨')).catch(() => alert('複製失敗，請手動複製'));
     };
+
     const saveData = async () => { if (!user || !isAdmin) return; const processed = {}; const allIds = new Set([...machines.map(m=>m.id), ...Object.keys(dailyData)]); allIds.forEach(id => { const r = dailyData[id]||{}; processed[id] = { upper: r.upper||'', lower: r.lower||'', total: (Number(r.upper)||0)+(Number(r.lower)||0), isPaid: r.isPaid||false }; }); await db.collection('daily_records').doc(selectedDate).set({ records: processed, cashCounts, extraData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); alert('資料已儲存！'); };
     const deleteRecord = async (date) => { if(!isAdmin) return; if(confirm(`刪除 ${date} 紀錄？`)) await db.collection('daily_records').doc(date).delete(); };
     const deleteMonth = async (month, recs) => { if(!isAdmin) return; if(confirm(`刪除 ${month} 所有資料 (${recs.length}筆)？`)) { const batch = db.batch(); recs.forEach(r => batch.delete(db.collection('daily_records').doc(r.date))); await batch.commit(); alert('已刪除月份資料'); } };
-    
-    // Memo Handlers
-    const addMemo = async () => {
-        if (!memoName.trim()) return alert('請輸入姓名');
-        if (!memoText.trim()) return alert('請輸入內容');
-        try {
-            await db.collection('memos').add({
-                name: memoName,
-                text: memoText,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            setMemoText(''); // Keep name for convenience
-        } catch(e) { console.error(e); alert('留言失敗'); }
-    };
-    const deleteMemo = async (id) => {
-        if (!isAdmin) return;
-        if (confirm('刪除此留言？')) await db.collection('memos').doc(id).delete();
-    };
+    const addMemo = async () => { if (!memoName.trim()) return alert('請輸入姓名'); if (!memoText.trim()) return alert('請輸入內容'); try { await db.collection('memos').add({ name: memoName, text: memoText, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); setMemoText(''); } catch(e) { console.error(e); alert('留言失敗'); } };
+    const deleteMemo = async (id) => { if (!isAdmin) return; if (confirm('刪除此留言？')) await db.collection('memos').doc(id).delete(); };
 
     // Render Logic
     const renderInput = () => {
@@ -211,18 +207,7 @@ const App = () => {
                 <div className="glass-panel p-2 rounded-2xl flex items-center relative overflow-hidden">
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-400 to-purple-500"></div>
                     <div className="pl-4 py-3 flex-1"><label className="block text-[10px] font-bold text-indigo-500/80 uppercase">選擇日期</label><div className="font-black text-slate-700 text-xl flex items-center gap-2"><span className="text-indigo-500"><Icons.Calendar/></span>{selectedDate}</div></div>
-                    
-                    {/* Today Button - Higher Z-Index to be clickable */}
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation(); 
-                            setSelectedDate(formatDate(new Date()));
-                        }}
-                        className="relative z-20 mr-2 bg-white/50 hover:bg-white text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm backdrop-blur-sm border border-white/50 transition-all active:scale-95"
-                    >
-                        今天
-                    </button>
-
+                    <button onClick={(e)=>{e.stopPropagation();setSelectedDate(formatDate(new Date()));}} className="relative z-20 mr-2 bg-white/50 hover:bg-white text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm backdrop-blur-sm border border-white/50 transition-all active:scale-95">今天</button>
                     <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full z-10 cursor-pointer"/>
                 </div>
                 {!isAdmin && <div className="bg-slate-200/80 p-3 rounded-xl text-xs text-slate-600 text-center flex items-center justify-center gap-2"><Icons.Lock/> 訪客模式：只能查看，無法編輯</div>}
@@ -237,7 +222,7 @@ const App = () => {
                                     <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400">上層個數</label><input disabled={!isAdmin} type="number" placeholder="0" value={d.upper?(Number(d.upper)/cv):''} onChange={e=>handleCountChange(m.id,'upper',e.target.value,cv)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/><div className="text-center text-[10px] text-slate-400">= ${Number(d.upper)||0}</div></div>
                                     <div className="space-y-1"><label className="text-[10px] font-bold text-slate-400">下層個數</label><input disabled={!isAdmin} type="number" placeholder="0" value={d.lower?(Number(d.lower)/cv):''} onChange={e=>handleCountChange(m.id,'lower',e.target.value,cv)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/><div className="text-center text-[10px] text-slate-400">= ${Number(d.lower)||0}</div></div>
                                 </div>
-                                <div className="px-5 pb-5"><button onClick={()=>handleWhatsApp(m)} className="w-full py-3 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-100 active:scale-95"><Icons.Whatsapp/> 報數到 WhatsApp</button></div>
+                                <div className="px-5 pb-5"><button onClick={()=>handleCopy(m)} className="w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-200 active:scale-95 transition-all"><Icons.Copy/> 複製文字</button></div>
                             </div>
                         )
                     })}
@@ -262,25 +247,15 @@ const App = () => {
                 {/* Memo Board */}
                 <div className="glass-panel p-5 rounded-3xl mt-8">
                     <h3 className="font-bold mb-4 text-slate-700 flex items-center gap-2 text-lg"><span className="w-1.5 h-6 rounded-full bg-indigo-500"></span>留言備忘板</h3>
-                    
-                    {/* Memo List */}
                     <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-1">
                         {memos.length === 0 && <div className="text-center text-slate-400 text-xs py-4">暫無留言</div>}
                         {memos.map(memo => (
                             <div key={memo.id} className="bg-white/60 p-3 rounded-2xl rounded-tl-none relative group">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex flex-col">
-                                        <span className="text-[11px] font-bold text-indigo-600">{memo.name}</span>
-                                        <span className="text-[9px] text-slate-400">{formatTime(memo.createdAt)}</span>
-                                    </div>
-                                    {isAdmin && <button onClick={()=>deleteMemo(memo.id)} className="text-slate-300 hover:text-rose-500 p-1"><Icons.Trash2/></button>}
-                                </div>
+                                <div className="flex justify-between items-start"><div className="flex flex-col"><span className="text-[11px] font-bold text-indigo-600">{memo.name}</span><span className="text-[9px] text-slate-400">{formatTime(memo.createdAt)}</span></div>{isAdmin && <button onClick={()=>deleteMemo(memo.id)} className="text-slate-300 hover:text-rose-500 p-1"><Icons.Trash2/></button>}</div>
                                 <div className="mt-1 text-sm text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">{memo.text}</div>
                             </div>
                         ))}
                     </div>
-
-                    {/* Memo Input */}
                     <div className="space-y-3 bg-white/40 p-3 rounded-2xl">
                         <input value={memoName} onChange={e=>setMemoName(e.target.value)} placeholder="輸入您的姓名..." className="w-full bg-white/50 border-none rounded-xl px-3 py-2 text-sm font-bold text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 outline-none"/>
                         <textarea value={memoText} onChange={e=>setMemoText(e.target.value)} placeholder="輸入備忘事項..." rows="2" className="w-full bg-white/50 border-none rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 outline-none resize-none"></textarea>
@@ -290,11 +265,12 @@ const App = () => {
 
                 <div className="h-40"></div>
 
-                {/* Floating Dock Fixed at Bottom */}
                 <div className="glass-dock fixed bottom-[85px] left-4 right-4 p-4 rounded-3xl flex justify-between items-center z-40">
                     <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className={`text-2xl font-black tracking-tight ${pl>=0?'text-emerald-500':'text-rose-500'}`}>{pl>0?'+':''}{formatCurrency(pl)}</p></div>
                     {isAdmin ? <button onClick={saveData} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg active:scale-95 text-sm transition-all"><Icons.Save/> 儲存</button> : <button disabled className="bg-slate-300 text-slate-500 px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-inner text-sm"><Icons.Lock/> 訪客</button>}
                 </div>
+                
+                <Toast show={toast.show} msg={toast.msg} />
             </div>
         );
     };
@@ -353,5 +329,4 @@ const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<
 </script>
 </body>
 </html>
-
-
+```eof
