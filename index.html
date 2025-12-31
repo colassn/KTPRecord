@@ -43,6 +43,10 @@ body { font-family: -apple-system, "SF Pro Display", "Noto Sans TC", sans-serif;
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* Toggle Switch */
+.toggle-checkbox:checked { right: 0; border-color: #68D391; }
+.toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
 </style>
 </head>
 <body>
@@ -81,7 +85,11 @@ const Icons = {
     Crown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 4l3 12h14l3-12-6 7-4-13-4 13z"/></svg>,
     Link: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
     Edit: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
-    ExternalLink: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    ExternalLink: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+    Brain: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
+    Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>,
+    ToggleLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="5" width="22" height="14" rx="7" ry="7" fill="#cbd5e1" stroke="none"/><circle cx="8" cy="12" r="5" fill="white"/></svg>,
+    ToggleRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="5" width="22" height="14" rx="7" ry="7" fill="#4f46e5" stroke="none"/><circle cx="16" cy="12" r="5" fill="white"/></svg>
 };
 
 const formatDate = (date) => { let m = '' + (date.getMonth() + 1), d = '' + date.getDate(), y = date.getFullYear(); if (m.length < 2) m = '0' + m; if (d.length < 2) d = '0' + d; return [y, m, d].join('-'); };
@@ -134,7 +142,7 @@ const WelcomeScreen = ({ onSelect }) => (
                 </div>
             </div>
         </div>
-        <div className="mt-12 text-[10px] text-slate-400">v6.4 Manual Add System</div>
+        <div className="mt-12 text-[10px] text-slate-400">v7.1 Permission Control</div>
     </div>
 );
 
@@ -145,7 +153,7 @@ const STORES = {
         name: '觀塘廣場店',
         engName: 'Game-Zone',
         color: 'from-blue-500 to-cyan-500',
-        collections: { machines: 'machines', records: 'daily_records', memos: 'memos', links: 'links' }, // Legacy paths
+        collections: { machines: 'machines', records: 'daily_records', memos: 'memos', links: 'links' }, 
         defaultMachines: [
             { id: '1', name: '機台 1', owner: '台主在場', phone: '', coinValue: 5, isOwnerMachine: false, inputMode: 'dual' },
             { id: '2', name: '機台 2', owner: '62778117', phone: '62778117', coinValue: 5, isOwnerMachine: false, inputMode: 'dual' },
@@ -161,7 +169,7 @@ const STORES = {
         name: '駱駝漆店',
         engName: 'StayTrue',
         color: 'from-purple-500 to-pink-500',
-        collections: { machines: 'camel_machines', records: 'camel_daily_records', memos: 'camel_memos', links: 'camel_links' }, // New paths
+        collections: { machines: 'camel_machines', records: 'camel_daily_records', memos: 'camel_memos', links: 'camel_links' },
         defaultMachines: [
             ...Array.from({length:15}, (_,i)=>({ id: `${i+1}`, name: `${i+1}`, owner: '', phone: '', coinValue: 5, isOwnerMachine: false, inputMode: 'single' })),
             ...['A','B','C','D','E','F'].map(c=>({ id: c, name: c, owner: '', phone: '', coinValue: 5, isOwnerMachine: false, inputMode: 'dual' }))
@@ -190,6 +198,14 @@ const StoreApp = ({ storeConfig, onBack }) => {
     const [password, setPassword] = useState('');
     const [toast, setToast] = useState({ show: false, msg: '' });
     
+    // Permission State
+    const [guestPerms, setGuestPerms] = useState({
+        allowInput: true,
+        viewHistory: true,
+        writeMemo: true,
+        viewLinks: true,
+    });
+    
     // Memo Inputs
     const [memoName, setMemoName] = useState('');
     const [memoText, setMemoText] = useState('');
@@ -202,7 +218,28 @@ const StoreApp = ({ storeConfig, onBack }) => {
     const handleLogout = () => { setIsAdmin(false); localStorage.removeItem('isAdmin'); alert('已登出'); };
     const showToast = (msg) => { setToast({show:true, msg}); setTimeout(()=>setToast({show:false, msg:''}), 2000); };
 
+    // Permission Helpers
+    const canInput = isAdmin || guestPerms.allowInput;
+    const canViewHistory = isAdmin || guestPerms.viewHistory;
+    const canWriteMemo = isAdmin || guestPerms.writeMemo;
+    const canViewLinks = isAdmin || guestPerms.viewLinks;
+
     // Fetchers
+    // Permissions Fetcher
+    useEffect(() => {
+        if (!user) return;
+        return db.collection('config').doc(`permissions_${storeConfig.id}`).onSnapshot(doc => {
+            if (doc.exists) {
+                setGuestPerms(doc.data());
+            } else {
+                // Default perms if doc doesn't exist
+                 const defaults = { allowInput: true, viewHistory: true, writeMemo: true, viewLinks: true };
+                 db.collection('config').doc(`permissions_${storeConfig.id}`).set(defaults);
+                 setGuestPerms(defaults);
+            }
+        });
+    }, [user, storeConfig.id]);
+
     useEffect(() => { 
         if (!user) return; 
         return db.collection(collections.machines).onSnapshot(snap => { 
@@ -212,20 +249,11 @@ const StoreApp = ({ storeConfig, onBack }) => {
             } else { 
                 const loaded = snap.docs.map(d => {
                     const data = d.data();
-                    // FORCE FIX: Ensure Camel Paint numeric machines are single input
                     if (storeConfig.id === 'camel_paint') {
-                        if (/^\d+$/.test(d.id)) {
-                             data.inputMode = 'single';
-                        } else {
-                             data.inputMode = 'dual';
-                        }
-                    } else {
-                        // Kwun Tong is all dual
-                        data.inputMode = 'dual';
-                    }
+                        if (/^\d+$/.test(d.id)) { data.inputMode = 'single'; } else { data.inputMode = 'dual'; }
+                    } else { data.inputMode = 'dual'; }
                     return {id: d.id, ...data};
                 }); 
-                // Custom sort: Numeric first, then Mini A-F
                 loaded.sort((a,b) => {
                     const nA = parseInt(a.id), nB = parseInt(b.id);
                     if(!isNaN(nA) && !isNaN(nB)) return nA - nB;
@@ -287,33 +315,25 @@ const StoreApp = ({ storeConfig, onBack }) => {
 
     // Handlers
     const handleCountChange = (id, field, val, coinVal, isSingle) => { 
-        if (!isAdmin) return; 
+        if (!canInput) return; 
         const amt = isNaN(parseFloat(val)) ? '' : parseFloat(val) * (coinVal || 5); 
-        
-        if (isSingle) {
-            setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), upper: amt, lower: 0 } }));
-        } else {
-            setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), [field]: amt } }));
-        }
+        if (isSingle) { setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), upper: amt, lower: 0 } })); } 
+        else { setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), [field]: amt } })); }
     };
     
     const handleCopy = (m) => {
         const r = dailyData[m.id]||{}; const u = Number(r.upper) || 0; const l = Number(r.lower) || 0; const t = u + l;
         const isSingle = m.inputMode === 'single';
-
         let msg = '';
-        if (isSingle) {
-             msg = `今天對幣 (${m.name})：\n數量：${u/ (m.coinValue||5)} (個)\n總額：$${t}`;
-        } else {
-             msg = `今天對幣 (${m.name})：\n上層：$${u}\n下層：$${l}\n總共：$${t}`;
-        }
+        if (isSingle) { msg = `今天對幣 (${m.name})：\n數量：${u/ (m.coinValue||5)} (個)\n總額：$${t}`; } 
+        else { msg = `今天對幣 (${m.name})：\n上層：$${u}\n下層：$${l}\n總共：$${t}`; }
         navigator.clipboard.writeText(msg).then(() => showToast('已複製到剪貼簿')).catch(() => alert('複製失敗'));
     };
 
-    const saveData = async () => { if (!user || !isAdmin) return; const processed = {}; const allIds = new Set([...machines.map(m=>m.id), ...Object.keys(dailyData)]); allIds.forEach(id => { const r = dailyData[id]||{}; processed[id] = { upper: r.upper||'', lower: r.lower||'', total: (Number(r.upper)||0)+(Number(r.lower)||0), isPaid: r.isPaid||false }; }); await db.collection(collections.records).doc(selectedDate).set({ records: processed, cashCounts, extraData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); alert('資料已儲存！'); };
+    const saveData = async () => { if (!canInput) return; const processed = {}; const allIds = new Set([...machines.map(m=>m.id), ...Object.keys(dailyData)]); allIds.forEach(id => { const r = dailyData[id]||{}; processed[id] = { upper: r.upper||'', lower: r.lower||'', total: (Number(r.upper)||0)+(Number(r.lower)||0), isPaid: r.isPaid||false }; }); await db.collection(collections.records).doc(selectedDate).set({ records: processed, cashCounts, extraData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); alert('資料已儲存！'); };
     const deleteRecord = async (date) => { if(!isAdmin) return; if(confirm(`刪除 ${date} 紀錄？`)) await db.collection(collections.records).doc(date).delete(); };
     const deleteMonth = async (month, recs) => { if(!isAdmin) return; if(confirm(`刪除 ${month} 所有資料 (${recs.length}筆)？`)) { const batch = db.batch(); recs.forEach(r => batch.delete(db.collection(collections.records).doc(r.date))); await batch.commit(); alert('已刪除月份資料'); } };
-    const addMemo = async () => { if (!memoName.trim()) return alert('請輸入姓名'); if (!memoText.trim()) return alert('請輸入內容'); try { await db.collection(collections.memos).add({ name: memoName, text: memoText, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); setMemoText(''); } catch(e) { console.error(e); alert('留言失敗'); } };
+    const addMemo = async () => { if (!canWriteMemo) return; if (!memoName.trim()) return alert('請輸入姓名'); if (!memoText.trim()) return alert('請輸入內容'); try { await db.collection(collections.memos).add({ name: memoName, text: memoText, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); setMemoText(''); } catch(e) { console.error(e); alert('留言失敗'); } };
     const deleteMemo = async (id) => { if (!isAdmin) return; if (confirm('刪除此留言？')) await db.collection(collections.memos).doc(id).delete(); };
     
     const toggleOwnerMachine = async (machine) => {
@@ -321,6 +341,13 @@ const StoreApp = ({ storeConfig, onBack }) => {
         const newVal = !machine.isOwnerMachine;
         const updatedMachine = { ...machine, isOwnerMachine: newVal };
         await db.collection(collections.machines).doc(machine.id).set(updatedMachine);
+    };
+    
+    // Permission Toggle
+    const togglePermission = async (key) => {
+        if (!isAdmin) return;
+        const newVal = !guestPerms[key];
+        await db.collection('config').doc(`permissions_${storeConfig.id}`).update({ [key]: newVal });
     };
 
     // MANUAL ADD MACHINE
@@ -333,7 +360,7 @@ const StoreApp = ({ storeConfig, onBack }) => {
         try {
             await db.collection(collections.machines).doc(id).set({
                 id: id,
-                name: storeConfig.id === 'kwun_tong' ? `機台 ${id}` : id, // Camel uses just ID as name
+                name: storeConfig.id === 'kwun_tong' ? `機台 ${id}` : id, 
                 owner: '', 
                 phone: '', 
                 coinValue: 5,
@@ -352,35 +379,10 @@ const StoreApp = ({ storeConfig, onBack }) => {
         if (!title) return;
         const url = prompt("請輸入網址：", "https://");
         if (!url) return;
-        
-        try {
-            await db.collection(collections.links).add({ title, url });
-            showToast('已新增工具連結');
-        } catch (e) {
-            console.error(e);
-            alert("新增失敗");
-        }
+        try { await db.collection(collections.links).add({ title, url }); showToast('已新增工具連結'); } catch (e) { console.error(e); alert("新增失敗"); }
     };
-    
-    const handleDeleteLink = async (id) => {
-        if (confirm("確定刪除此工具連結？")) {
-             await db.collection(collections.links).doc(id).delete();
-             showToast('已刪除連結');
-        }
-    };
-    
-    const handleEditLink = async (link) => {
-        const newTitle = prompt("修改名稱：", link.title);
-        if (newTitle === null) return;
-        const newUrl = prompt("修改網址：", link.url);
-        if (newUrl === null) return;
-        
-        await db.collection(collections.links).doc(link.id).update({
-            title: newTitle,
-            url: newUrl
-        });
-        showToast('已更新連結');
-    };
+    const handleDeleteLink = async (id) => { if (confirm("確定刪除此工具連結？")) { await db.collection(collections.links).doc(id).delete(); showToast('已刪除連結'); } };
+    const handleEditLink = async (link) => { const newTitle = prompt("修改名稱：", link.title); if (newTitle === null) return; const newUrl = prompt("修改網址：", link.url); if (newUrl === null) return; await db.collection(collections.links).doc(link.id).update({ title: newTitle, url: newUrl }); showToast('已更新連結'); };
 
     // --- Daily Summary Table ---
     const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
@@ -464,26 +466,26 @@ const StoreApp = ({ storeConfig, onBack }) => {
                     <button onClick={(e)=>{e.stopPropagation();setSelectedDate(formatDate(new Date()));}} className="relative z-20 mr-2 bg-white/50 hover:bg-white text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm backdrop-blur-sm border border-white/50 transition-all active:scale-95">今天</button>
                     <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full z-10 cursor-pointer"/>
                 </div>
-                {!isAdmin && <div className="bg-slate-200/80 p-3 rounded-xl text-xs text-slate-600 text-center flex items-center justify-center gap-2 animate-enter delay-1"><Icons.Lock/> 訪客模式：只能查看</div>}
+                {!canInput && <div className="bg-slate-200/80 p-3 rounded-xl text-xs text-slate-600 text-center flex items-center justify-center gap-2 animate-enter delay-1"><Icons.Lock/> 訪客模式：只能查看</div>}
                 <div className="space-y-5">
                     {machines.map((m, i) => {
                         const d = dailyData[m.id]||{}; const cv = m.coinValue||5; const sub = (Number(d.upper)||0)+(Number(d.lower)||0);
                         const isSingle = m.inputMode === 'single';
 
                         return (
-                            <div key={m.id} className={`glass-panel rounded-3xl overflow-hidden animate-enter ${!isAdmin?'locked-element':''}`} style={{animationDelay: `${(i+1)*30}ms`}}>
+                            <div key={m.id} className={`glass-panel rounded-3xl overflow-hidden animate-enter ${!canInput?'locked-element':''}`} style={{animationDelay: `${(i+1)*30}ms`}}>
                                 <div className="bg-white/40 px-5 py-4 border-b border-white/50 flex justify-between items-center"><div className="flex items-center gap-3"><div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center font-bold text-lg shadow-lg`}>{m.id}</div><div><h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">{m.name} {m.isOwnerMachine && <span className="bg-amber-100 text-amber-600 text-[10px] px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1 shadow-sm">台主</span>}</h3><p className="text-[11px] text-slate-500 font-medium">幣值: ${cv}</p></div></div><div className="text-right"><span className="text-[10px] text-slate-400 block font-bold">小計</span><span className="font-black text-indigo-600 text-xl">{formatCurrency(sub).replace('HK$','')}</span></div></div>
                                 
                                 <div className={`p-5 grid ${isSingle ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-slate-400">{isSingle ? '數量 (Count)' : '上層個數'}</label>
-                                        <input disabled={!isAdmin} type="number" placeholder="0" value={d.upper?(Number(d.upper)/cv):''} onChange={e=>handleCountChange(m.id,'upper',e.target.value,cv, isSingle)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/>
+                                        <input disabled={!canInput} type="number" placeholder="0" value={d.upper?(Number(d.upper)/cv):''} onChange={e=>handleCountChange(m.id,'upper',e.target.value,cv, isSingle)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/>
                                         <div className="text-center text-[10px] text-slate-400">= ${Number(d.upper)||0}</div>
                                     </div>
                                     {!isSingle && (
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-slate-400">下層個數</label>
-                                            <input disabled={!isAdmin} type="number" placeholder="0" value={d.lower?(Number(d.lower)/cv):''} onChange={e=>handleCountChange(m.id,'lower',e.target.value,cv, false)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/>
+                                            <input disabled={!canInput} type="number" placeholder="0" value={d.lower?(Number(d.lower)/cv):''} onChange={e=>handleCountChange(m.id,'lower',e.target.value,cv, false)} className="glass-input w-full py-3 px-2 rounded-2xl text-center font-bold text-slate-700 text-lg focus:bg-white outline-none"/>
                                             <div className="text-center text-[10px] text-slate-400">= ${Number(d.lower)||0}</div>
                                         </div>
                                     )}
@@ -495,21 +497,21 @@ const StoreApp = ({ storeConfig, onBack }) => {
                     })}
                 </div>
 
-                <div className={`glass-panel p-5 rounded-3xl mt-8 animate-enter delay-3 ${!isAdmin?'locked-element':''}`}>
+                <div className={`glass-panel p-5 rounded-3xl mt-8 animate-enter delay-3 ${!canInput?'locked-element':''}`}>
                     <h3 className="font-bold mb-4 text-slate-700 flex items-center gap-2 text-lg"><span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-teal-500"></span>現金點算</h3>
                     <div className="grid grid-cols-2 gap-3">
-                        {['1000','500','100','50','20','10'].map(d=>(<div key={d} className="relative"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-emerald-600 shadow-sm">${d}</label><div className="flex items-center"><input disabled={!isAdmin} type="number" placeholder="0" value={cashCounts[d]||''} onChange={e=>setCashCounts(prev=>({...prev,[d]:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div><div className="text-right text-[10px] text-slate-400 mt-1 mr-1 opacity-60">= {formatCurrency((cashCounts[d]||0)*d).replace('HK$','')}</div></div>))}
-                        <div className="col-span-2 relative mt-3"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-amber-500 shadow-sm">硬幣總額</label><input disabled={!isAdmin} type="number" placeholder="0" value={cashCounts['coins']||''} onChange={e=>setCashCounts(prev=>({...prev,['coins']:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div>
+                        {['1000','500','100','50','20','10'].map(d=>(<div key={d} className="relative"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-emerald-600 shadow-sm">${d}</label><div className="flex items-center"><input disabled={!canInput} type="number" placeholder="0" value={cashCounts[d]||''} onChange={e=>setCashCounts(prev=>({...prev,[d]:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div><div className="text-right text-[10px] text-slate-400 mt-1 mr-1 opacity-60">= {formatCurrency((cashCounts[d]||0)*d).replace('HK$','')}</div></div>))}
+                        <div className="col-span-2 relative mt-3"><label className="absolute -top-2 left-3 bg-white/90 px-1.5 rounded text-[10px] font-bold text-amber-500 shadow-sm">硬幣總額</label><input disabled={!canInput} type="number" placeholder="0" value={cashCounts['coins']||''} onChange={e=>setCashCounts(prev=>({...prev,['coins']:parseFloat(e.target.value)||0}))} className="glass-input w-full py-3 px-4 rounded-xl font-bold text-slate-700 focus:bg-white outline-none"/></div>
                     </div>
                     <div className="mt-5 pt-4 border-t border-slate-200/50 flex justify-between font-bold text-sm"><span className="text-slate-500">本次紙幣小計</span><span className="text-emerald-600 text-xl font-black">{formatCurrency(currCash)}</span></div>
                 </div>
 
-                <div className={`glass-panel p-5 rounded-3xl mt-4 space-y-5 animate-enter delay-3 ${!isAdmin?'locked-element':''}`}>
-                    <div><label className="text-xs font-bold text-slate-500 ml-1">上次數到的紙幣</label><input disabled={!isAdmin} type="number" placeholder="0" value={extraData.previousCash} onChange={e=>setExtraData(prev=>({...prev,previousCash:e.target.value}))} className="glass-input w-full py-3 px-4 rounded-xl focus:bg-white outline-none font-bold text-slate-700 text-lg"/></div>
-                    <div><label className="text-xs font-bold text-slate-500 ml-1">兌幣機現有紙幣</label><input disabled={!isAdmin} type="number" placeholder="0" value={extraData.exchangeMachineCash} onChange={e=>setExtraData(prev=>({...prev,exchangeMachineCash:e.target.value}))} className="glass-input w-full py-3 px-4 rounded-xl focus:bg-white outline-none font-bold text-slate-700 text-lg"/></div>
+                <div className={`glass-panel p-5 rounded-3xl mt-4 space-y-5 animate-enter delay-3 ${!canInput?'locked-element':''}`}>
+                    <div><label className="text-xs font-bold text-slate-500 ml-1">上次數到的紙幣</label><input disabled={!canInput} type="number" placeholder="0" value={extraData.previousCash} onChange={e=>setExtraData(prev=>({...prev,previousCash:e.target.value}))} className="glass-input w-full py-3 px-4 rounded-xl focus:bg-white outline-none font-bold text-slate-700 text-lg"/></div>
+                    <div><label className="text-xs font-bold text-slate-500 ml-1">兌幣機現有紙幣</label><input disabled={!canInput} type="number" placeholder="0" value={extraData.exchangeMachineCash} onChange={e=>setExtraData(prev=>({...prev,exchangeMachineCash:e.target.value}))} className="glass-input w-full py-3 px-4 rounded-xl focus:bg-white outline-none font-bold text-slate-700 text-lg"/></div>
                 </div>
 
-                <DailySummaryTable machines={machines} data={dailyData} cashCounts={cashCounts} extraData={extraData} onTogglePaid={(id,st)=>{if(isAdmin)setDailyData(prev=>({...prev,[id]:{...(prev[id]||{}),isPaid:st}}))}}/>
+                <DailySummaryTable machines={machines} data={dailyData} cashCounts={cashCounts} extraData={extraData} onTogglePaid={(id,st)=>{if(canInput)setDailyData(prev=>({...prev,[id]:{...(prev[id]||{}),isPaid:st}}))}}/>
                 
                 {/* Memo Board */}
                 <div className="glass-panel p-5 rounded-3xl mt-8 animate-enter delay-4">
@@ -523,6 +525,7 @@ const StoreApp = ({ storeConfig, onBack }) => {
                             </div>
                         ))}
                     </div>
+                    {canWriteMemo ? (
                     <div className="space-y-3 bg-white/40 p-3 rounded-2xl">
                         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                             {PRESET_NAMES.map(name => (<button key={name} onClick={() => setMemoName(name)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shadow-sm border border-white/20 ${memoName === name ? 'bg-indigo-500 text-white shadow-indigo-200' : 'bg-white/60 text-slate-600 hover:bg-white'}`}>{name}</button>))}
@@ -531,13 +534,12 @@ const StoreApp = ({ storeConfig, onBack }) => {
                         <textarea value={memoText} onChange={e=>setMemoText(e.target.value)} placeholder="輸入備忘事項..." rows="2" className="w-full bg-white/50 border-none rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 outline-none resize-none"></textarea>
                         <button onClick={addMemo} className="w-full bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-200"><Icons.Message/> 發送留言</button>
                     </div>
+                    ) : <div className="text-center text-xs text-slate-400 py-2">訪客無權限留言</div>}
                 </div>
-
                 <div className="h-40"></div>
-
                 <div className="glass-dock fixed bottom-[85px] left-4 right-4 p-4 rounded-3xl flex justify-between items-center z-40 animate-enter delay-5">
-                    <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className={`text-2xl font-black tracking-tight ${pl>=0?'text-emerald-500':'text-rose-500'}`}>{pl>0?'+':''}{formatCurrency(pl)}</p></div>
-                    {isAdmin ? <button onClick={saveData} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg active:scale-95 text-sm transition-all"><Icons.Save/> 儲存</button> : <button disabled className="bg-slate-300 text-slate-500 px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-inner text-sm"><Icons.Lock/> 訪客</button>}
+                    <div><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">本日總盈虧</p><p className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">{pl>0?'+':''}{formatCurrency(pl)}</p></div>
+                    {canInput ? <button onClick={saveData} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg active:scale-95 text-sm transition-all"><Icons.Save/> 儲存</button> : <button disabled className="bg-slate-300 text-slate-500 px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-inner text-sm"><Icons.Lock/> 訪客</button>}
                 </div>
                 
                 <Toast show={toast.show} msg={toast.msg} />
@@ -546,6 +548,7 @@ const StoreApp = ({ storeConfig, onBack }) => {
     };
 
     const renderHistory = () => {
+        if (!canViewHistory) return <div className="flex flex-col items-center justify-center py-40 space-y-4 text-slate-400"><Icons.Lock/><p className="font-bold text-sm">此頁面訪客無權限查看</p></div>;
         if (!historyData.length) return <div className="flex flex-col items-center py-20 text-slate-400 animate-enter"><Icons.Empty/><p className="mt-4 font-bold text-sm">暫無紀錄，請先新增資料。</p></div>;
         const groups = {}; historyData.forEach(r => { const k=r.date.substring(0,7); if(!groups[k]) groups[k]=[]; groups[k].push(r); });
         return (
@@ -573,53 +576,38 @@ const StoreApp = ({ storeConfig, onBack }) => {
 
     const renderSettings = () => (
         <div className="space-y-4 animate-enter">
-            <h2 className="text-3xl font-black text-slate-800 px-1 text-shimmer">機台設定</h2>
-            
-            {/* 訪客提示 */}
-            {!isAdmin && <div className="bg-slate-200/80 p-4 rounded-2xl text-sm font-bold text-slate-600 flex items-center justify-center gap-2 mb-4"><Icons.Lock/> 設定已鎖定 (訪客模式)</div>}
+             {isAdmin && (
+                <div className="glass-panel p-5 rounded-3xl mb-6 border-2 border-indigo-100">
+                    <h3 className="text-sm font-bold text-indigo-600 mb-3 uppercase tracking-wider flex items-center gap-2"><Icons.Settings/> 訪客權限管理</h3>
+                    <div className="space-y-3">
+                        {Object.entries({allowInput:'允許輸入營收', viewHistory:'允許查看歷史', writeMemo:'允許新增留言', viewLinks:'允許查看工具'}).map(([key, label]) => (
+                            <div key={key} className="flex justify-between items-center p-2 hover:bg-white/50 rounded-xl transition-colors">
+                                <span className="text-sm font-bold text-slate-700">{label}</span>
+                                <div onClick={() => togglePermission(key)} className={`w-12 h-7 flex items-center rounded-full p-1 cursor-pointer transition-colors ${guestPerms[key] ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                    <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${guestPerms[key] ? 'translate-x-5' : ''}`}></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-            <div className="space-y-3">
-                {machines.map((m, i) => (
-                <div key={m.id} className="glass-panel p-4 rounded-3xl flex flex-col gap-3 animate-enter" style={{animationDelay: `${i*50}ms`}}>
+            <h2 className="text-3xl font-black text-slate-800 px-1 text-shimmer">機台設定</h2>
+            {!isAdmin && <div className="bg-slate-200/80 p-4 rounded-2xl text-sm font-bold text-slate-600 flex items-center justify-center gap-2 mb-4"><Icons.Lock/> 設定已鎖定 (訪客模式)</div>}
+            <div className="space-y-3">{machines.map((m, i) => (
+                <div key={m.id} className={`glass-panel p-4 rounded-3xl flex flex-col gap-3 animate-enter`} style={{animationDelay: `${i*50}ms`}}>
                     <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-inner`}>{m.id}</div>
-                        
                         <div className="flex-1 space-y-2">
-                             {/* 機台名稱 input - ReadOnly if !isAdmin */}
-                             <input 
-                                disabled={!isAdmin} 
-                                value={m.name} 
-                                onChange={e=>{const n=[...machines];n[i].name=e.target.value;setMachines(n)}} 
-                                className={`w-full bg-transparent border-b outline-none font-bold text-slate-700 text-lg ${!isAdmin ? 'border-transparent' : 'border-slate-200 focus:border-indigo-500'}`}
-                             />
-                             
+                             <input disabled={!isAdmin} value={m.name} onChange={e=>{const n=[...machines];n[i].name=e.target.value;setMachines(n)}} className="w-full bg-transparent border-b border-slate-200 focus:border-indigo-500 outline-none font-bold text-slate-700 text-lg"/>
                              <div className="flex gap-2">
-                                <input 
-                                    disabled={!isAdmin} 
-                                    placeholder="台主" 
-                                    value={m.owner} 
-                                    onChange={e=>{const n=[...machines];n[i].owner=e.target.value;setMachines(n)}} 
-                                    className={`text-xs w-full rounded-lg px-2 py-1.5 border-none font-medium ${!isAdmin ? 'bg-slate-100 text-slate-500' : 'bg-slate-50/50'}`}
-                                />
-                                <input 
-                                    disabled={!isAdmin} 
-                                    placeholder="電話" 
-                                    value={m.phone} 
-                                    onChange={e=>{const n=[...machines];n[i].phone=e.target.value;setMachines(n)}} 
-                                    className={`text-xs w-full rounded-lg px-2 py-1.5 border-none text-right font-medium ${!isAdmin ? 'bg-slate-100 text-slate-500' : 'bg-slate-50/50'}`}
-                                />
+                                <input disabled={!isAdmin} placeholder="台主" value={m.owner} onChange={e=>{const n=[...machines];n[i].owner=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none font-medium"/>
+                                <input disabled={!isAdmin} placeholder="電話" value={m.phone} onChange={e=>{const n=[...machines];n[i].phone=e.target.value;setMachines(n)}} className="text-xs w-full bg-slate-50/50 rounded-lg px-2 py-1.5 border-none text-right font-medium"/>
                              </div>
                         </div>
-
-                        {/* Delete Button - Only Admin */}
-                        {isAdmin ? (
-                            <button onClick={async()=>{if(confirm('刪除?'))await db.collection(collections.machines).doc(m.id).delete()}} className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><Icons.Trash2/></button>
-                        ) : (
-                            <span className="text-slate-300"><Icons.Lock/></span>
-                        )}
+                        {isAdmin ? <button onClick={async()=>{if(confirm('刪除?'))await db.collection(collections.machines).doc(m.id).delete()}} className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><Icons.Trash2/></button> : <span className="text-slate-300"><Icons.Lock/></span>}
                     </div>
-
-                    {/* 台主機 Toggle - Only Admin */}
+                    {/* 台主機 Toggle */}
                     {isAdmin && (
                         <div className="flex justify-end pt-2 border-t border-slate-100/50">
                              <button onClick={() => toggleOwnerMachine(m)} className={`text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 transition-all ${m.isOwnerMachine ? 'bg-amber-100 text-amber-600 ring-1 ring-amber-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
@@ -627,35 +615,17 @@ const StoreApp = ({ storeConfig, onBack }) => {
                              </button>
                         </div>
                     )}
-                    {/* For guests, we can show a badge if it is an owner machine, or nothing */}
-                    {!isAdmin && m.isOwnerMachine && (
-                        <div className="flex justify-end pt-2 border-t border-slate-100/50">
-                             <span className="text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1 bg-amber-100 text-amber-600 border border-amber-200">
-                                台主機
-                             </span>
-                        </div>
-                    )}
                 </div>
             ))}</div>
-
-            {/* Bottom Buttons */}
-            {isAdmin ? (
-                <>
-                <button onClick={handleAddMachine} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button>
-                <button onClick={async()=>{for(const m of machines)await db.collection(collections.machines).doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95 transition-all">儲存設定</button>
-                </>
-            ) : (
-                <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2">
-                    <Icons.Lock/> 權限不足
-                </button>
-            )}
-            
-            <div className="h-40"></div>
+            {isAdmin ? <><button onClick={handleAddMachine} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-indigo-400 hover:text-indigo-500 transition-all"><Icons.Plus/> 新增機台</button><button onClick={async()=>{for(const m of machines)await db.collection(collections.machines).doc(m.id).set(m);alert('設定已儲存')}} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl mt-4 active:scale-95 transition-all">儲存設定</button></> : <button disabled className="w-full bg-slate-300 text-slate-500 py-4 rounded-2xl font-bold shadow-inner mt-4 flex items-center justify-center gap-2"><Icons.Lock/> 權限不足</button>}
         </div>
     );
     
     // --- Render Links ---
-    const renderLinksTab = () => (
+    const renderLinksTab = () => {
+        if (!canViewLinks) return <div className="flex flex-col items-center justify-center py-40 space-y-4 text-slate-400"><Icons.Lock/><p className="font-bold text-sm">此頁面訪客無權限查看</p></div>;
+
+        return (
         <div className="space-y-4 animate-enter">
             <h2 className="text-3xl font-black text-slate-800 px-1 text-shimmer">實用工具</h2>
             {!isAdmin && <div className="bg-slate-200/80 p-4 rounded-2xl text-sm font-bold text-slate-600 flex items-center justify-center gap-2 mb-4"><Icons.Lock/> 僅管理員可編輯連結</div>}
@@ -693,7 +663,8 @@ const StoreApp = ({ storeConfig, onBack }) => {
             
             <div className="h-40"></div>
         </div>
-    );
+        );
+    };
 
 
     return (
