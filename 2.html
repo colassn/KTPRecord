@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>娛樂基地 Pro</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<style>
+body { font-family: -apple-system, "SF Pro Display", "Noto Sans TC", sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f5f5f7; color: #1d1d1f; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+/* 極光背景動畫 */
+.mesh-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: -2; overflow: hidden; }
+.mesh-blob { position: absolute; filter: blur(90px); opacity: 0.6; animation: float 20s infinite alternate; }
+.blob-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: #c084fc; animation-delay: 0s; }
+.blob-2 { bottom: -10%; right: -10%; width: 70vw; height: 70vw; background: #818cf8; animation-delay: -5s; }
+.blob-3 { top: 40%; left: 40%; width: 50vw; height: 50vw; background: #f472b6; animation-delay: -10s; }
+@keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
+
+/* 高級玻璃質感 */
+.glass-panel { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05); }
+.glass-dock { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-top: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1); }
+.glass-nav { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.3); }
+.glass-input { background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.5); transition: all 0.3s ease; }
+.glass-input:focus { background: rgba(255, 255, 255, 0.8); border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2); }
+
+/* Toast Notification Animation */
+@keyframes slide-up-fade {
+    0% { transform: translate(-50%, 100%); opacity: 0; }
+    100% { transform: translate(-50%, 0); opacity: 1; }
+}
+.toast-anim { animation: slide-up-fade 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+.locked-element { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+</style>
+</head>
+<body>
+<div class="mesh-bg"><div class="mesh-blob blob-1 rounded-full"></div><div class="mesh-blob blob-2 rounded-full"></div><div class="mesh-blob blob-3 rounded-full"></div></div>
+<div id="root"></div>
+<script type="text/babel">
+const firebaseConfig = { apiKey: "AIzaSyAaOvxEx2gFin7caKmK8WFUZW2akue03M0", authDomain: "ktpsave.firebaseapp.com", projectId: "ktpsave", storageBucket: "ktpsave.firebasestorage.app", messagingSenderId: "1085218871782", appId: "1:1085218871782:web:afa68ab315fe8b3dbe5e27", measurementId: "G-WZQ61MP067" };
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(); const db = firebase.firestore();
+const { useState, useEffect, useMemo, useRef } = React;
+
+const Icons = {
+    Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+    Save: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+    History: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+    Settings: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+    LayoutDashboard: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
+    Trash2: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+    Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+    ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>,
+    ChevronUp: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"/></svg>,
+    Table: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>,
+    CheckSquare: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
+    Square: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
+    Whatsapp: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
+    Folder: () => <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
+    Empty: () => <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+    Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
+    Unlock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>,
+    Close: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+    Message: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>,
+    Send: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>,
+    Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
+    Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    ArrowRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+    Crown: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2 4l3 12h14l3-12-6 7-4-13-4 13z"/></svg>,
+    Link: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+    Edit: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+    ExternalLink: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+    Ledger: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+};
+
+const formatDate = (date) => { let m = '' + (date.getMonth() + 1), d = '' + date.getDate(), y = date.getFullYear(); if (m.length < 2) m = '0' + m; if (d.length < 2) d = '0' + d; return [y, m, d].join('-'); };
+const formatCurrency = (n) => { if(isNaN(n) || n === null) return '$0'; return new Intl.NumberFormat('zh-HK', { style: 'currency', currency: 'HKD', minimumFractionDigits: 0 }).format(n); };
+const formatTime = (ts) => { if(!ts) return ''; const d = new Date(ts.seconds * 1000); return `${d.getMonth()+1}月${d.getDate()}日 ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; };
+
+// --- Toast Component ---
+const Toast = ({ show, msg }) => (
+    <div className={`fixed bottom-32 left-1/2 -translate-x-1/2 z-50 pointer-events-none toast-box ${show ? 'toast-show' : ''}`}>
+        <div className="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 border border-white/10 ring-1 ring-white/20">
+             {msg}
+        </div>
+    </div>
+);
+
+// --- Colason Page Component ---
+const ColasonPage = ({ storeConfig }) => {
+    const [records, setRecords] = useState([]);
+    const [form, setForm] = useState({ date: formatDate(new Date()), item: '', income: '', cost: '', note: '' });
+    const [isColasonUser, setIsColasonUser] = useState(false);
+
+    useEffect(() => {
+        // Double check auth just in case
+        const check = localStorage.getItem('isColason');
+        if(check === 'true') setIsColasonUser(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isColasonUser) return;
+        // Global collection for Colason across stores or specific? Let's use a specific one or shared. 
+        // Based on request "record specific machine income", let's use a shared collection but maybe filtered by store if needed. 
+        // For simplicity and "private ledger" feel, let's use one collection for Colason.
+        return db.collection('colason_ledger').orderBy('date', 'desc').onSnapshot(snap => {
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setRecords(list);
+        });
+    }, [isColasonUser]);
+
+    const handleAdd = async () => {
+        if(!form.item || !form.income) return alert("請輸入項目和收入");
+        const profit = (parseFloat(form.income)||0) - (parseFloat(form.cost)||0);
+        await db.collection('colason_ledger').add({
+            ...form,
+            income: parseFloat(form.income)||0,
+            cost: parseFloat(form.cost)||0,
+            profit: profit,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        setForm({ ...form, item: '', income: '', cost: '', note: '' }); // Reset fields except date
+    };
+
+    const handleDelete = async (id) => {
+        if(confirm("確定刪除此紀錄？")) await db.collection('colason_ledger').doc(id).delete();
+    };
+
+    const totalIncome = records.reduce((acc, r) => acc + (r.income || 0), 0);
+    const totalProfit = records.reduce((acc, r) => acc + (r.profit || 0), 0);
+
+    if (!isColasonUser) return <div className="p-10 text-center text-slate-400">存取被拒</div>;
+
+    return (
+        <div className="space-y-6 animate-enter">
+            {/* Dashboard Card */}
+            <div className="glass-panel p-6 rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-lg shadow-indigo-500/30">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">我的總資產</p>
+                        <h2 className="text-3xl font-black">{formatCurrency(totalProfit)}</h2>
+                    </div>
+                    <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md"><Icons.Crown /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                    <div>
+                        <p className="text-indigo-200 text-[10px]">總收入</p>
+                        <p className="font-bold text-lg">{formatCurrency(totalIncome)}</p>
+                    </div>
+                    <div>
+                        <p className="text-indigo-200 text-[10px]">總成本</p>
+                        <p className="font-bold text-lg opacity-80">{formatCurrency(records.reduce((acc,r)=>acc+(r.cost||0),0))}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Input Form */}
+            <div className="glass-panel p-5 rounded-3xl space-y-4">
+                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">新增帳目</h3>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                         <label className="text-[10px] font-bold text-slate-400 ml-1">日期</label>
+                         <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="glass-input w-full p-3 rounded-xl font-bold text-slate-700 outline-none" />
+                    </div>
+                    <div className="col-span-2">
+                        <label className="text-[10px] font-bold text-slate-400 ml-1">機台 / 項目名稱</label>
+                        <input type="text" placeholder="例如：1號機 / 入貨" value={form.item} onChange={e=>setForm({...form, item: e.target.value})} className="glass-input w-full p-3 rounded-xl font-bold text-slate-700 outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-emerald-500 ml-1">收入 ($)</label>
+                        <input type="number" placeholder="0" value={form.income} onChange={e=>setForm({...form, income: e.target.value})} className="glass-input w-full p-3 rounded-xl font-bold text-emerald-600 outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-rose-500 ml-1">成本 ($)</label>
+                        <input type="number" placeholder="0" value={form.cost} onChange={e=>setForm({...form, cost: e.target.value})} className="glass-input w-full p-3 rounded-xl font-bold text-rose-600 outline-none" />
+                    </div>
+                    <div className="col-span-2">
+                        <input type="text" placeholder="備註 (選填)" value={form.note} onChange={e=>setForm({...form, note: e.target.value})} className="glass-input w-full p-3 rounded-xl text-sm text-slate-600 outline-none" />
+                    </div>
+                </div>
+                <button onClick={handleAdd} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-all">新增紀錄</button>
+            </div>
+
+            {/* Records List */}
+            <div className="space-y-3 pb-40">
+                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide px-1">帳目明細</h3>
+                {records.map(r => (
+                    <div key={r.id} className="glass-panel p-4 rounded-2xl flex justify-between items-center group hover:bg-white/80 transition-all">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">{r.date.substring(5)}</span>
+                                <span className="font-bold text-slate-800">{r.item}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-1">{r.note} {r.cost > 0 && `(成本: $${r.cost})`}</div>
+                        </div>
+                        <div className="text-right">
+                            <div className={`font-black text-lg ${r.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                {r.profit > 0 ? '+' : ''}{formatCurrency(r.profit).replace('HK$','')}
+                            </div>
+                            <button onClick={()=>handleDelete(r.id)} className="text-slate-300 hover:text-rose-500 p-1"><Icons.Trash2 /></button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// --- Summary Table ---
+const DailySummaryTable = ({ machines, data, cashCounts, extraData, readOnly=false, onTogglePaid }) => {
+    const allIds = useMemo(() => Array.from(new Set([...machines.map(m=>m.id), ...Object.keys(data||{})])).sort((a,b)=>{
+             const nA = parseInt(a), nB = parseInt(b);
+             if(!isNaN(nA) && !isNaN(nB)) return nA - nB;
+             if(!isNaN(nA)) return -1; if(!isNaN(nB)) return 1;
+             return a.localeCompare(b);
+        }), [machines, data]);
+    const machineMap = useMemo(() => { const map={}; machines.forEach(m=>map[m.id]=m); return map; }, [machines]);
+    const totalMachineRevenue = allIds.reduce((sum, id) => { const r = data[id]||{}; return sum + (Number(r.upper)||0) + (Number(r.lower)||0); }, 0);
+    const currentCash = ((cashCounts?.['1000']||0)*1000) + ((cashCounts?.['500']||0)*500) + ((cashCounts?.['100']||0)*100) + ((cashCounts?.['50']||0)*50) + ((cashCounts?.['20']||0)*20) + ((cashCounts?.['10']||0)*10) + (Number(cashCounts?.['coins'])||0);
+    const previousCash = Number(extraData?.previousCash)||0;
+    const totalCash = currentCash + previousCash;
+    const profitLoss = totalCash - totalMachineRevenue;
+
+    return (
+        <div className="glass-panel rounded-3xl overflow-hidden mt-6 shadow-sm animate-enter delay-3">
+            <div className="bg-white/40 px-5 py-4 border-b border-white/40 flex items-center gap-2 backdrop-blur-md">
+                <div className="text-indigo-600 bg-indigo-50 p-1.5 rounded-lg"><Icons.Table /></div>
+                <h3 className="font-bold text-slate-800 text-sm">營收結算表</h3>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                    <thead><tr className="bg-indigo-50/50 text-indigo-900/60 text-[10px] uppercase font-bold tracking-wider"><th className="px-4 py-3 pl-6">機台</th><th className="px-2 py-3 text-right">上數</th><th className="px-2 py-3 text-right">下數</th><th className="px-2 py-3 text-right text-indigo-700">總計</th><th className="px-2 py-3 text-center">派彩</th></tr></thead>
+                    <tbody className="divide-y divide-white/40">
+                        {allIds.map((id, idx) => {
+                            const m = machineMap[id] || {name:`${id} (已刪)`, owner:'-', inputMode: 'dual'}; const r = data[id]||{}; const total = (Number(r.upper)||0)+(Number(r.lower)||0);
+                            const isSingle = m.inputMode === 'single';
+
+                            if(!machineMap[id] && total===0) return null;
+                            return (
+                                <tr key={id} className={`hover:bg-white/40 transition-colors ${idx%2===0?'bg-white/10':''}`}>
+                                    <td className="px-4 py-3 pl-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${storeConfig.color} text-white flex items-center justify-center text-[10px] font-bold shadow-md`}>{id}</div>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-700 flex items-center gap-1">
+                                                    {m.name}
+                                                    {m.isOwnerMachine && <span className="text-[9px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full border border-amber-200">台主</span>}
+                                                </span>
+                                                <span className="text-[10px] text-slate-500">{m.owner}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{r.upper>0?formatCurrency(r.upper).replace('HK$',''):'-'}</td>
+                                    <td className="px-2 py-3 text-right font-mono text-slate-600 text-xs tracking-tight">{isSingle ? '-' : (r.lower>0?formatCurrency(r.lower).replace('HK$',''):'-')}</td>
+                                    <td className="px-2 py-3 text-right font-bold text-indigo-600 font-mono text-xs tracking-tight">{total>0?formatCurrency(total).replace('HK$',''):'-'}</td>
+                                    <td className="px-2 py-3 text-center"><button disabled={readOnly} onClick={()=>onTogglePaid&&onTogglePaid(id, !r.isPaid)} className={`p-1.5 rounded-lg transition-all active:scale-95 ${readOnly?'':'hover:bg-white/60'}`}>{r.isPaid?<div className="text-emerald-500 drop-shadow-sm"><Icons.CheckSquare/></div>:<div className="text-slate-300"><Icons.Square/></div>}</button></td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+            <div className="bg-white/30 p-5 space-y-2 backdrop-blur-sm">
+                <div className="flex justify-between text-sm"><span className="text-slate-500 font-medium">機台總和</span><span className="font-bold text-slate-700 font-mono">{formatCurrency(totalMachineRevenue)}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>本次紙幣</span><span className="font-bold text-emerald-600 font-mono">+ {formatCurrency(currentCash)}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-slate-500 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>上次紙幣</span><span className="font-bold text-blue-600 font-mono">+ {formatCurrency(previousCash)}</span></div>
+                <div className="my-2 border-t border-slate-400/20 border-dashed"></div>
+                <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">現金總數</span><span className="font-black text-slate-800 font-mono text-base">{formatCurrency(totalCash)}</span></div>
+                <div className={`mt-3 p-4 rounded-2xl flex justify-between items-center shadow-inner ring-1 ring-inset transition-colors ${profitLoss>=0?'bg-emerald-50/50 text-emerald-900 ring-emerald-200/50':'bg-rose-50/50 text-rose-900 ring-rose-200/50'}`}>
+                    <span className="font-bold text-xs uppercase tracking-wider opacity-70">盈虧</span><span className="font-black text-2xl tracking-tight font-mono">{profitLoss>0?'+':''}{formatCurrency(profitLoss)}</span>
+                </div>
+                <div className="mt-2 text-[10px] text-slate-400 text-center font-medium">兌幣機記錄: {formatCurrency(Number(extraData?.exchangeMachineCash)||0)}</div>
+            </div>
+        </div>
+    );
+};
+
+// --- App ---
+const App = () => {
+    const [user, setUser] = useState(null);
+    const [activeTab, setActiveTab] = useState('input');
+    const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+    const [machines, setMachines] = useState([]);
+    const [dailyData, setDailyData] = useState({});
+    const [extraData, setExtraData] = useState({ previousCash: '', exchangeMachineCash: '' });
+    const [historyData, setHistoryData] = useState([]);
+    const [memos, setMemos] = useState([]);
+    const [links, setLinks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [cashCounts, setCashCounts] = useState({ '1000': 0, '500': 0, '100': 0, '50': 0, '20': 0, '10': 0, 'coins': 0 });
+    const [openMonths, setOpenMonths] = useState({});
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isColason, setIsColason] = useState(false); // New State for Colason
+    const [showLogin, setShowLogin] = useState(false);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [toast, setToast] = useState({ show: false, msg: '' });
+    
+    // Memo Inputs
+    const [memoName, setMemoName] = useState('');
+    const [memoText, setMemoText] = useState('');
+    const PRESET_NAMES = ['Hin', 'Yo', '馬', '西裝友'];
+
+    // Permission State (for Guests)
+    const [guestPerms, setGuestPerms] = useState({
+        allowInput: true, viewHistory: true, writeMemo: true, viewLinks: true, allowSettings: false
+    });
+
+    useEffect(() => { auth.signInAnonymously().catch(console.error); return auth.onAuthStateChanged(setUser); }, []);
+    useEffect(() => { 
+        const s = localStorage.getItem('isAdmin'); 
+        if(s==='true') setIsAdmin(true); 
+        const c = localStorage.getItem('isColason');
+        if(c==='true') setIsColason(true);
+    }, []);
+
+    const handleLogin = (e) => { 
+        e.preventDefault(); 
+        if(username==='Colason'&&password==='Colason'){ 
+            setIsAdmin(true); localStorage.setItem('isAdmin','true'); 
+            setShowLogin(false); setUsername(''); setPassword(''); 
+        } 
+        else if (username === 'Colasonyt1123' && password === 'Hin23377429') {
+            setIsAdmin(true); localStorage.setItem('isAdmin', 'true');
+            setIsColason(true); localStorage.setItem('isColason', 'true');
+            setShowLogin(false); setUsername(''); setPassword('');
+        }
+        else alert('錯誤'); 
+    };
+    
+    const handleLogout = () => { 
+        setIsAdmin(false); localStorage.removeItem('isAdmin'); 
+        setIsColason(false); localStorage.removeItem('isColason');
+        alert('已登出'); 
+    };
+    
+    const showToast = (msg) => { setToast({show:true, msg}); setTimeout(()=>setToast({show:false, msg:''}), 2000); };
+
+    // Permission Helpers
+    const canInput = isAdmin || guestPerms.allowInput;
+    const canViewHistory = isAdmin || guestPerms.viewHistory;
+    const canWriteMemo = isAdmin || guestPerms.writeMemo;
+    const canViewLinks = isAdmin || guestPerms.viewLinks;
+    const canManageSettings = isAdmin || guestPerms.allowSettings;
+
+    // Fetchers
+    useEffect(() => {
+        if (!user) return;
+        return db.collection('config').doc(`permissions_${storeConfig.id}`).onSnapshot(doc => {
+            if (doc.exists) setGuestPerms(doc.data());
+            else {
+                 const defaults = { allowInput: true, viewHistory: true, writeMemo: true, viewLinks: true, allowSettings: false };
+                 db.collection('config').doc(`permissions_${storeConfig.id}`).set(defaults);
+                 setGuestPerms(defaults);
+            }
+        });
+    }, [user, storeConfig.id]);
+
+    useEffect(() => { 
+        if (!user) return; 
+        return db.collection(collections.machines).onSnapshot(snap => { 
+            if (snap.empty) { 
+                storeConfig.defaultMachines.forEach(m => db.collection(collections.machines).doc(m.id).set(m)); 
+                setMachines(storeConfig.defaultMachines); 
+            } else { 
+                const loaded = snap.docs.map(d => {
+                    const data = d.data();
+                    if (storeConfig.id === 'camel_paint') {
+                        if (/^\d+$/.test(d.id)) { data.inputMode = 'single'; } else { data.inputMode = 'dual'; }
+                    } else { data.inputMode = 'dual'; }
+                    return {id: d.id, ...data};
+                }); 
+                loaded.sort((a,b) => {
+                    const nA = parseInt(a.id), nB = parseInt(b.id);
+                    if(!isNaN(nA) && !isNaN(nB)) return nA - nB;
+                    if(!isNaN(nA)) return -1;
+                    if(!isNaN(nB)) return 1;
+                    return a.id.localeCompare(b.id);
+                });
+                setMachines(loaded); 
+            } 
+            setLoading(false); 
+        }); 
+    }, [user, collections]);
+
+    useEffect(() => { 
+        if (!user) return; 
+        return db.collection(collections.records).doc(selectedDate).onSnapshot(doc => { 
+            if (doc.exists) { const d = doc.data(); setDailyData(d.records||{}); setCashCounts(d.cashCounts||{ '1000': 0, '500': 0, '100': 0, '50': 0, '20': 0, '10': 0, 'coins': 0 }); setExtraData(d.extraData||{ previousCash: '', exchangeMachineCash: '' }); } 
+            else { setDailyData({}); setCashCounts({ '1000': 0, '500': 0, '100': 0, '50': 0, '20': 0, '10': 0, 'coins': 0 }); setExtraData({ previousCash: '', exchangeMachineCash: '' }); } 
+        }); 
+    }, [user, selectedDate, collections]);
+
+    useEffect(() => { 
+        if (!user) return; 
+        return db.collection(collections.records).onSnapshot(snap => { 
+            const recs = snap.docs.map(d => ({ date: d.id, ...d.data() })).filter(r => r.date.match(/^\d{4}-\d{2}-\d{2}$/)); 
+            recs.sort((a, b) => b.date.localeCompare(a.date)); 
+            setHistoryData(recs); 
+        }); 
+    }, [user, collections]);
+
+    useEffect(() => { if (historyData.length > 0 && Object.keys(openMonths).length === 0) setOpenMonths({ [historyData[0].date.substring(0, 7)]: true }); }, [historyData]);
+    
+    useEffect(() => { 
+        if (!user) return; 
+        return db.collection(collections.memos).orderBy('createdAt', 'desc').onSnapshot(snap => { 
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
+            setMemos(list); 
+        }); 
+    }, [user, collections]);
+    
+    // Links Fetcher
+    useEffect(() => {
+        if (!user) return;
+        return db.collection(collections.links).onSnapshot(snap => {
+            if (snap.empty) {
+                const defaultLinks = [
+                    { title: '數錢', url: 'https://colassn.github.io/Money/' },
+                    { title: '紙幣智能分發機', url: 'https://colassn.github.io/Money/givemoney.html' },
+                    { title: '對幣機計算器', url: 'https://colassn.github.io/StayTrue5Cal/' }
+                ];
+                defaultLinks.forEach(l => db.collection(collections.links).add(l));
+            } else {
+                const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                setLinks(list);
+            }
+        });
+    }, [user, collections]);
+
+
+    // Handlers
+    const handleCountChange = (id, field, val, coinVal, isSingle) => { 
+        if (!canInput) return; 
+        const amt = isNaN(parseFloat(val)) ? '' : parseFloat(val) * (coinVal || 5); 
+        if (isSingle) { setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), upper: amt, lower: 0 } })); } 
+        else { setDailyData(prev => ({ ...prev, [id]: { ...(prev[id]||{}), [field]: amt } })); }
+    };
+    
+    const handleCopy = (m) => {
+        const r = dailyData[m.id]||{}; const u = Number(r.upper) || 0; const l = Number(r.lower) || 0; const t = u + l;
+        const isSingle = m.inputMode === 'single';
+        let msg = '';
+        if (isSingle) { msg = `今天對幣 (${m.name})：\n數量：${u/ (m.coinValue||5)} (個)\n總額：$${t}`; } 
+        else { msg = `今天對幣 (${m.name})：\n上層：$${u}\n下層：$${l}\n總共：$${t}`; }
+        navigator.clipboard.writeText(msg).then(() => showToast('已複製到剪貼簿')).catch(() => alert('複製失敗'));
+    };
+
+    const saveData = async () => { if (!canInput) return; const processed = {}; const allIds = new Set([...machines.map(m=>m.id), ...Object.keys(dailyData)]); allIds.forEach(id => { const r = dailyData[id]||{}; processed[id] = { upper: r.upper||'', lower: r.lower||'', total: (Number(r.upper)||0)+(Number(r.lower)||0), isPaid: r.isPaid||false }; }); await db.collection(collections.records).doc(selectedDate).set({ records: processed, cashCounts, extraData, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); alert('資料已儲存！'); };
+    const deleteRecord = async (date) => { if(!isAdmin) return; if(confirm(`刪除 ${date} 紀錄？`)) await db.collection(collections.records).doc(date).delete(); };
+    const deleteMonth = async (month, recs) => { if(!isAdmin) return; if(confirm(`刪除 ${month} 所有資料 (${recs.length}筆)？`)) { const batch = db.batch(); recs.forEach(r => batch.delete(db.collection(collections.records).doc(r.date))); await batch.commit(); alert('已刪除月份資料'); } };
+    const addMemo = async () => { if (!canWriteMemo) return; if (!memoName.trim()) return alert('請輸入姓名'); if (!memoText.trim()) return alert('請輸入內容'); try { await db.collection(collections.memos).add({ name: memoName, text: memoText, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); setMemoText(''); } catch(e) { console.error(e); alert('留言失敗'); } };
+    const deleteMemo = async (id) => { if (!isAdmin) return; if (confirm('刪除此留言？')) await db.collection(collections.memos).doc(id).delete(); };
+    
+    const toggleOwnerMachine = async (machine) => {
+        if (!canManageSettings) return;
+        const newVal = !machine.isOwnerMachine;
+        const updatedMachine = { ...machine, isOwnerMachine: newVal };
+        await db.collection(collections.machines).doc(machine.id).set(updatedMachine);
+    };
+    
+    const togglePermission = async (key) => {
+        if (!isAdmin) return;
+        const newVal = !guestPerms[key];
+        await db.collection('config').doc(`permissions_${storeConfig.id}`).update({ [key]: newVal });
+    };
+
+    // MANUAL ADD MACHINE
+    const handleAddMachine = async () => {
+        const defaultId = (machines.reduce((max,m)=>{const n=parseInt(m.id); return isNaN(n)?max:Math.max(max,n);},0)+1).toString();
+        const id = prompt("請輸入新機台編號 (例如: 16 或 G)", defaultId);
+        if (!id) return;
+        if (machines.some(m => m.id === id)) return alert('機台編號已存在！');
+
+        try {
+            await db.collection(collections.machines).doc(id).set({
+                id: id,
+                name: storeConfig.id === 'kwun_tong' ? `機台 ${id}` : id, 
+                owner: '', 
+                phone: '', 
+                coinValue: 5,
+                isOwnerMachine: false
+            });
+            alert(`成功新增機台：${id}`);
+        } catch (e) {
+            console.error(e);
+            alert('新增失敗: ' + e.message);
+        }
+    };
+    
+    // Links Handlers
+    const handleAddLink = async () => {
+        const title = prompt("請輸入工具名稱：");
+        if (!title) return;
+        const url = prompt("請輸入網址：", "https://");
+        if (!url) return;
+        try { await db.collection(collections.links).add({ title, url }); showToast('已新增工具連結'); } catch (e) { console.error(e); alert("新增失敗"); }
+    };
+    const handleDeleteLink = async (id) => { if (confirm("確定刪除此工具連結？")) { await db.collection(collections.links).doc(id).delete(); showToast('已刪除連結'); } };
+    const handleEditLink = async (link) => { const newTitle = prompt("修改名稱：", link.title); if (newTitle === null) return; const newUrl = prompt("修改網址：", link.url); if (newUrl === null) return; await db.collection(collections.links).doc(link.id).update({ title: newTitle, url: newUrl }); showToast('已更新連結'); };
+
+    // --- Render Links ---
+    const renderLinksTab = () => {
+        if (!canViewLinks) return <div className="flex flex-col items-center justify-center py-40 space-y-4 text-slate-400"><Icons.Lock/><p className="font-bold text-sm">此頁面訪客無權限查看</p></div>;
+        return (
+        <div className="space-y-4 animate-enter">
+            <h2 className="text-3xl font-black text-slate-800 px-1">實用工具</h2>
+            {!isAdmin && <div className="bg-slate-200/80 p-4 rounded-2xl text-sm font-bold text-slate-600 flex items-center justify-center gap-2 mb-4"><Icons.Lock/> 僅管理員可編輯連結</div>}
+            <div className="space-y-3">
+                {links.map((link) => (
+                    <div key={link.id} onClick={() => window.open(link.url, '_blank')} className="glass-panel p-5 rounded-3xl flex items-center justify-between cursor-pointer hover:bg-white/80 transition-all group active:scale-95">
+                        <div className="flex items-center gap-4"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center shadow-md"><Icons.Link /></div><div><h3 className="font-bold text-slate-700 text-lg">{link.title}</h3><p className="text-xs text-slate-400 truncate max-w-[150px]">{link.url}</p></div></div>
+                        <div className="flex items-center gap-2"><div className="text-slate-300 group-hover:text-emerald-500 transition-colors"><Icons.ArrowRight /></div>
+                             {isAdmin && (<div className="flex flex-col gap-2 ml-2" onClick={(e) => e.stopPropagation()}><button onClick={() => handleEditLink(link)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:text-blue-500 hover:bg-blue-50"><Icons.Edit /></button><button onClick={() => handleDeleteLink(link.id)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50"><Icons.Trash2 /></button></div>)}
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {isAdmin && <button onClick={handleAddLink} className="w-full py-4 border-2 border-dashed border-slate-300/60 rounded-3xl text-slate-400 font-bold flex justify-center gap-2 hover:border-emerald-400 hover:text-emerald-500 transition-all mt-4"><Icons.Plus /> 新增工具連結</button>}
+            <div className="h-40"></div>
+        </div>
+        );
+    };
+
+    const renderMainContent = () => (
+        <div className="px-4 max-w-lg mx-auto pb-[400px]">
+            {loading ? <div className="flex flex-col items-center justify-center py-40 space-y-4"><div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div><div className="text-sm font-bold text-slate-400 animate-pulse">系統載入中...</div></div> 
+                : (activeTab==='input'?renderInput():activeTab==='history'?renderHistory():activeTab==='links'?renderLinksTab():activeTab==='colason'? <ColasonPage /> :renderSettings())
+            }
+        </div>
+    );
+
+    return (
+        <div className="min-h-screen">
+            <div className="glass-nav sticky top-0 z-40 mb-6"><div className="max-w-lg mx-auto px-5 py-4 flex justify-between items-center">
+                <div onClick={() => onBack()} className="cursor-pointer"><h1 className={`text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r ${storeConfig.color} tracking-tighter`}>{storeConfig.engName}</h1><p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">點擊切換店舖</p></div>
+                <div className="flex items-center gap-3"><div className="text-xs font-bold bg-slate-100/80 px-3 py-1.5 rounded-full text-slate-600 shadow-sm border border-white/50">{selectedDate}</div><button onClick={()=>isAdmin?handleLogout():setShowLogin(true)} className={`p-2 rounded-full transition-all active:scale-95 ${isAdmin?'bg-indigo-100 text-indigo-600 shadow-inner':'bg-white shadow-sm text-slate-400'}`}>{isAdmin?<Icons.Unlock/>:<Icons.Lock/>}</button></div>
+            </div></div>
+            {showLogin && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"><div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm border border-white/50"><div className="flex justify-between items-center mb-6"><h3 className="text-xl font-black text-slate-800">管理員登入</h3><button onClick={()=>setShowLogin(false)} className="text-slate-400 hover:text-slate-600"><Icons.Close/></button></div><form onSubmit={handleLogin} className="space-y-4"><input type="text" placeholder="帳號" value={username} onChange={e=>setUsername(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-700 border border-transparent focus:border-indigo-500 transition-all"/><input type="password" placeholder="密碼" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-700 border border-transparent focus:border-indigo-500 transition-all"/><button type="submit" className="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-indigo-500/30 active:scale-95 transition-all">登入</button></form></div></div>}
+            
+            <Toast show={toast.show} msg={toast.msg} />
+            {renderMainContent()}
+            
+            <div className="glass-nav fixed bottom-0 left-0 right-0 pb-safe z-30 h-[80px] flex items-center">
+                <div className="flex justify-around w-full max-w-lg mx-auto">
+                    <button onClick={()=>setActiveTab('input')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-16 h-16 transition-all duration-300 ${activeTab==='input'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.LayoutDashboard/><span className="text-[10px] font-bold mt-1">輸入</span></button>
+                    <button onClick={()=>setActiveTab('history')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-16 h-16 transition-all duration-300 ${activeTab==='history'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.History/><span className="text-[10px] font-bold mt-1">歷史</span></button>
+                    <button onClick={()=>setActiveTab('links')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-16 h-16 transition-all duration-300 ${activeTab==='links'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.Link/><span className="text-[10px] font-bold mt-1">工具</span></button>
+                    {isColason && <button onClick={()=>setActiveTab('colason')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-16 h-16 transition-all duration-300 ${activeTab==='colason'?'text-violet-600 bg-violet-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.Ledger/><span className="text-[10px] font-bold mt-1">帳房</span></button>}
+                    <button onClick={()=>setActiveTab('settings')} className={`flex flex-col items-center justify-center p-2 rounded-2xl w-16 h-16 transition-all duration-300 ${activeTab==='settings'?'text-indigo-600 bg-indigo-50/50 scale-105 shadow-sm':'text-slate-400 hover:text-slate-600'}`}><Icons.Settings/><span className="text-[10px] font-bold mt-1">設定</span></button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Root = () => {
+    const [currentStore, setCurrentStore] = useState(null);
+    return currentStore ? <StoreApp storeConfig={currentStore} onBack={() => setCurrentStore(null)} /> : <WelcomeScreen onSelect={setCurrentStore} />;
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<Root />);
+</script>
+</body>
+</html>
